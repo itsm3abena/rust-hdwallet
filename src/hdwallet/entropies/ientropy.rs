@@ -23,25 +23,22 @@ impl fmt::Display for EntropyError {
     }
 }
 
+/// Object-safe entropy scheme (mnemonic word list family).
 pub trait IEntropy {
-    fn name() -> &'static str
-    where
-        Self: Sized;
+    fn name(&self) -> &'static str;
 
-    fn strengths() -> &'static [usize]
-    where
-        Self: Sized;
+    fn strengths(&self) -> &'static [usize];
 
-    fn is_valid_strength(strength: usize) -> bool {
-        Self::strengths().contains(&strength)
+    fn is_valid_strength(&self, strength: usize) -> bool {
+        self.strengths().contains(&strength)
     }
 
-    fn is_valid_bytes_strength(bytes_len: usize) -> bool {
-        Self::is_valid_strength(bytes_len * 8)
+    fn is_valid_bytes_strength(&self, bytes_len: usize) -> bool {
+        self.is_valid_strength(bytes_len * 8)
     }
 
-    fn generate(strength: usize) -> Result<String, EntropyError> {
-        if !Self::is_valid_strength(strength) {
+    fn generate(&self, strength: usize) -> Result<String, EntropyError> {
+        if !self.is_valid_strength(strength) {
             return Err(EntropyError::new("Unsupported entropy strength"));
         }
 
@@ -50,9 +47,9 @@ pub trait IEntropy {
         Ok(hex::encode(bytes))
     }
 
-    fn is_valid(entropy: &str) -> bool {
+    fn is_valid_entropy_hex(&self, entropy: &str) -> bool {
         let re = Regex::new(r"^[0-9a-fA-F]+$").unwrap();
-        re.is_match(entropy) && Self::is_valid_strength(entropy.len() * 4)
+        re.is_match(entropy) && self.is_valid_strength(entropy.len() * 4)
     }
 }
 
@@ -62,14 +59,15 @@ pub struct EntropyInstance {
 }
 
 impl EntropyInstance {
-    pub fn new<T: IEntropy>(entropy: &str) -> Result<Self, EntropyError> {
+    pub fn new<T: IEntropy + Default>(entropy: &str) -> Result<Self, EntropyError> {
+        let scheme = T::default();
         let bytes_len = entropy.len() / 2;
 
-        if !T::is_valid_bytes_strength(bytes_len) {
+        if !scheme.is_valid_bytes_strength(bytes_len) {
             return Err(EntropyError::new("Unsupported entropy strength"));
         }
 
-        if !IEntropy::is_valid(entropy) {
+        if !scheme.is_valid_entropy_hex(entropy) {
             return Err(EntropyError::new("Invalid entropy data"));
         }
 
@@ -83,7 +81,7 @@ impl EntropyInstance {
         &self.entropy
     }
 
-    pub fn strength(&self) -> usize {
+    pub fn strength_bits(&self) -> usize {
         self.strength
     }
 }

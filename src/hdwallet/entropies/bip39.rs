@@ -10,14 +10,15 @@ impl BIP39EntropyStrengths {
     pub const TWO_HUNDRED_FIFTY_SIX: usize = 256;
 }
 
+#[derive(Clone, Copy, Default)]
 pub struct BIP39Entropy;
 
 impl IEntropy for BIP39Entropy {
-    fn name() -> &'static str {
+    fn name(&self) -> &'static str {
         "BIP39"
     }
 
-    fn strengths() -> &'static [usize] {
+    fn strengths(&self) -> &'static [usize] {
         &[
             BIP39EntropyStrengths::ONE_HUNDRED_TWENTY_EIGHT,
             BIP39EntropyStrengths::ONE_HUNDRED_SIXTY,

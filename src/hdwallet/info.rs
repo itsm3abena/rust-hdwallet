@@ -1,14 +1,14 @@
 // src/info.rs
 
-pub const __name__: &str = "hdwallet-rust";
-pub const __version__: &str = "0.1.0";
-pub const __license__: &str = "MIT";
-pub const __author__: &str = "Meheret Tesfaye Batu";
-pub const __email__: &str = "meherett.batu@gmail.com";
-pub const __documentation__: &str = "https://github.com/username/hdwallet-rust";
-pub const __description__: &str = "Hierarchical Deterministic Wallet Library in Rust";
-pub const __source__: &str = "https://github.com/username/hdwallet-rust";
-pub const __url__: &str = "https://github.com/username/hdwallet-rust";
-pub const __tracker__: &str = "https://github.com/username/hdwallet-rust/issues";
-pub const __keywords__: &[&str] = &["hdwallet", "bitcoin", "crypto", "wallet"];
-pub const __websites__: &[&str] = &["https://meherett.github.io"];
+pub const __NAME__: &str = "hdwallet-rust";
+pub const __VERSION__: &str = "0.1.0";
+pub const __LICENSE__: &str = "MIT";
+pub const __AUTHOR__: &str = "Abenezer Lulseged Wube";
+pub const __EMAIL__: &str = "itsm3abena@gmail.com";
+pub const __DOCUMENTATION__: &str = "https://github.com/itsm3abena/hdwallet-rust";
+pub const __DESCRIPTION__: &str = "Hierarchical Deterministic Wallet Library in Rust";
+pub const __SOURCE__: &str = "https://github.com/itsm3abena/hdwallet-rust";
+pub const __URL__: &str = "https://github.com/itsm3abena/hdwallet-rust";
+pub const __TRACKER__: &str = "https://github.com/itsm3abena/hdwallet-rust/issues";
+pub const __KEYWORDS__: &[&str] = &["hdwallet", "bitcoin", "crypto", "wallet"];
+pub const __WEBSITES__: &[&str] = &["https://itsm3abena.github.io"];

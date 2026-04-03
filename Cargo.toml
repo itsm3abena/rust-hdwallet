@@ -16,3 +16,7 @@ bech32 = "0.11"
 hmac = "0.13"
 sha2 = "0.11"
 base58 = "0.1"
+regex = "1"
+rand = "0.8"
+num-bigint = { version = "0.4", features = ["rand"] }
+num-traits = "0.2"
