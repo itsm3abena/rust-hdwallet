@@ -9,9 +9,9 @@ pub mod monero;
 pub use bip39::BIP39Entropy;
 pub use ientropy::{EntropyError as RawEntropyError, EntropyInstance, IEntropy};
 
-use algorand::AlgorandEntropy;
-use electrum::{ElectrumV1Entropy, ElectrumV2Entropy};
-use monero::MoneroEntropy;
+pub use algorand::AlgorandEntropy;
+pub use electrum::{ElectrumV1Entropy, ElectrumV2Entropy};
+pub use monero::MoneroEntropy;
 
 use crate::hdwallet::exceptions::EntropyError;
 
