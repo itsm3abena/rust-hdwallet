@@ -67,6 +67,12 @@ macro_rules! define_error {
 define_error!(EntropyError);
 define_error!(ChecksumError);
 define_error!(MnemonicError);
+
+impl MnemonicError {
+    pub fn simple(message: &str) -> Self {
+        Self(Error::new(message, None, None, None))
+    }
+}
 define_error!(SeedError);
 define_error!(HDError);
 define_error!(DerivationError);

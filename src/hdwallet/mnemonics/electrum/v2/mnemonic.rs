@@ -1,248 +1,315 @@
 use std::collections::HashMap;
 
-use crate::entropies::{ElectrumV2Entropy, IEntropy, ELECTRUM_V2_ENTROPY_STRENGTHS};
-use crate::exceptions::{Error, EntropyError, MnemonicError};
-use crate::utils::{get_bytes, integer_to_bytes, bytes_to_string, bytes_to_integer};
-use crate::crypto::hmac_sha512;
-use crate::mnemonics::bip39::BIP39Mnemonic;
-use crate::mnemonics::electrum::v1::ElectrumV1Mnemonic;
+use crate::hdwallet::mnemonics::bip39::BIP39Mnemonic;
+use num_bigint::BigUint;
+use num_traits::{One, Zero};
 
+use crate::hdwallet::entropies::electrum::ElectrumV2EntropyStrengths;
+use crate::hdwallet::entropies::{ElectrumV2Entropy, IEntropy};
+use crate::hdwallet::exceptions::MnemonicError;
+use crate::hdwallet::mnemonics::electrum::v1::ElectrumV1Mnemonic;
+use crate::hdwallet::utils::{hmac_sha512, parse_wordlist_text};
+use crate::hdwallet::mnemonics::imnemonic::IMnemonic;
 
-pub struct ELECTRUM_V2_MNEMONIC_WORDS;
+pub struct ElectrumV2MnemonicWordCounts;
 
-impl ELECTRUM_V2_MNEMONIC_WORDS {
+impl ElectrumV2MnemonicWordCounts {
     pub const TWELVE: usize = 12;
     pub const TWENTY_FOUR: usize = 24;
 }
 
-pub struct ELECTRUM_V2_MNEMONIC_LANGUAGES;
+pub struct ElectrumV2MnemonicLanguages;
 
-impl ELECTRUM_V2_MNEMONIC_LANGUAGES {
+impl ElectrumV2MnemonicLanguages {
     pub const CHINESE_SIMPLIFIED: &'static str = "chinese-simplified";
     pub const ENGLISH: &'static str = "english";
     pub const PORTUGUESE: &'static str = "portuguese";
     pub const SPANISH: &'static str = "spanish";
 }
 
-pub struct ELECTRUM_V2_MNEMONIC_TYPES;
+pub struct ElectrumV2MnemonicTypes;
 
-impl ELECTRUM_V2_MNEMONIC_TYPES {
+impl ElectrumV2MnemonicTypes {
     pub const STANDARD: &'static str = "standard";
     pub const SEGWIT: &'static str = "segwit";
     pub const STANDARD_2FA: &'static str = "standard-2fa";
     pub const SEGWIT_2FA: &'static str = "segwit-2fa";
 }
 
-
-pub struct ElectrumV2Mnemonic;
+#[derive(Clone, Debug)]
+pub struct ElectrumV2Mnemonic {
+    phrase: String,
+    mnemonic_type: String,
+}
 
 impl ElectrumV2Mnemonic {
-    pub const WORD_BIT_LENGTH: usize = 11;
+    pub fn mnemonic_types_map() -> HashMap<&'static str, &'static str> {
+        HashMap::from([
+            (ElectrumV2MnemonicTypes::STANDARD, "01"),
+            (ElectrumV2MnemonicTypes::SEGWIT, "100"),
+            (ElectrumV2MnemonicTypes::STANDARD_2FA, "101"),
+            (ElectrumV2MnemonicTypes::SEGWIT_2FA, "102"),
+        ])
+    }
 
     pub fn words_list() -> Vec<usize> {
         vec![
-            ELECTRUM_V2_MNEMONIC_WORDS::TWELVE,
-            ELECTRUM_V2_MNEMONIC_WORDS::TWENTY_FOUR,
+            ElectrumV2MnemonicWordCounts::TWELVE,
+            ElectrumV2MnemonicWordCounts::TWENTY_FOUR,
         ]
     }
 
     pub fn words_to_entropy_strength() -> HashMap<usize, usize> {
-        let mut map = HashMap::new();
-        map.insert(
-            ELECTRUM_V2_MNEMONIC_WORDS::TWELVE,
-            ELECTRUM_V2_ENTROPY_STRENGTHS::ONE_HUNDRED_THIRTY_TWO,
-        );
-        map.insert(
-            ELECTRUM_V2_MNEMONIC_WORDS::TWENTY_FOUR,
-            ELECTRUM_V2_ENTROPY_STRENGTHS::TWO_HUNDRED_SIXTY_FOUR,
-        );
-        map
+        HashMap::from([
+            (
+                ElectrumV2MnemonicWordCounts::TWELVE,
+                ElectrumV2EntropyStrengths::ONE_HUNDRED_THIRTY_TWO,
+            ),
+            (
+                ElectrumV2MnemonicWordCounts::TWENTY_FOUR,
+                ElectrumV2EntropyStrengths::TWO_HUNDRED_SIXTY_FOUR,
+            ),
+        ])
     }
 
-    pub fn mnemonic_types() -> HashMap<&'static str, &'static str> {
-        let mut map = HashMap::new();
-        map.insert(ELECTRUM_V2_MNEMONIC_TYPES::STANDARD, "01");
-        map.insert(ELECTRUM_V2_MNEMONIC_TYPES::SEGWIT, "100");
-        map.insert(ELECTRUM_V2_MNEMONIC_TYPES::STANDARD_2FA, "101");
-        map.insert(ELECTRUM_V2_MNEMONIC_TYPES::SEGWIT_2FA, "102");
-        map
-    }
-
-    pub fn name() -> &'static str {
-        "Electrum-V2"
-    }
-
-    pub fn from_words(
-        words: usize,
-        language: &str,
-        mnemonic_type: &str,
-        max_attempts: u128,
-    ) -> Result<String, Error> {
-        if !Self::words_list().contains(&words) {
-            return Err(MnemonicError::new(
-                "Invalid mnemonic words number",
-                Some(format!("{:?}", Self::words_list())),
-                Some(words.to_string()),
-            )
-            .into());
-        }
-
-        let entropy_strength = Self::words_to_entropy_strength()[&words];
-
-        let entropy = ElectrumV2Entropy::generate(entropy_strength);
-
-        Self::from_entropy(entropy, language, mnemonic_type, max_attempts)
-    }
-
-    pub fn from_entropy<T: Into<Vec<u8>>>(
-        entropy: T,
-        language: &str,
-        mnemonic_type: &str,
-        max_attempts: u128,
-    ) -> Result<String, Error> {
-        let entropy_bytes = get_bytes(entropy.into());
-
-        if !ElectrumV2Entropy::are_entropy_bits_enough(&entropy_bytes) {
-            return Err(EntropyError::new(
-                "Invalid entropy strength",
-                None,
-                None,
-            )
-            .into());
-        }
-
-        let mut entropy_int = bytes_to_integer(&entropy_bytes);
-
-        for i in 0..max_attempts {
-            let new_entropy = entropy_int + i as u128;
-
-            let result = Self::encode(
-                integer_to_bytes(new_entropy),
-                language,
-                mnemonic_type,
-            );
-
-            if let Ok(m) = result {
-                return Ok(m);
+    fn wordlist_embedded(language: &str) -> Result<&'static str, MnemonicError> {
+        match language {
+            ElectrumV2MnemonicLanguages::ENGLISH => Ok(include_str!("wordlist/english.txt")),
+            ElectrumV2MnemonicLanguages::CHINESE_SIMPLIFIED => {
+                Ok(include_str!("wordlist/chinese_simplified.txt"))
             }
+            ElectrumV2MnemonicLanguages::PORTUGUESE => Ok(include_str!("wordlist/portuguese.txt")),
+            ElectrumV2MnemonicLanguages::SPANISH => Ok(include_str!("wordlist/spanish.txt")),
+            _ => Err(MnemonicError::simple(&format!(
+                "Unknown Electrum V2 language: {}",
+                language
+            ))),
         }
-
-        Err(Error::new("Unable to generate a valid mnemonic", None, None))
     }
 
-    pub fn encode(
-        entropy: Vec<u8>,
+    pub fn get_words_list(language: &str) -> Result<Vec<String>, MnemonicError> {
+        let text = Self::wordlist_embedded(language)?;
+        let mut words = parse_wordlist_text(text);
+        for w in &mut words {
+            *w = w.to_lowercase();
+        }
+        Ok(words)
+    }
+
+    fn looks_like_bip39(words: &[String]) -> bool {
+        BIP39Mnemonic::is_valid_mnemonic_words(words)
+    }
+
+    fn looks_like_electrum_v1(words: &[String]) -> bool {
+        ElectrumV1Mnemonic::decode_phrase(&words.join(" "), None, None).is_ok()
+    }
+
+    pub fn is_type(words: &[String], mnemonic_type: &str) -> bool {
+        let types = Self::mnemonic_types_map();
+        let Some(expected_prefix) = types.get(mnemonic_type) else {
+            return false;
+        };
+        let joined = words.join(" ");
+        let hash = hmac_sha512(b"Seed version", joined.as_bytes());
+        let prefix = hex::encode(&hash);
+        prefix.starts_with(expected_prefix)
+    }
+
+    pub fn is_valid(words: &[String], mnemonic_type: &str) -> bool {
+        if Self::looks_like_bip39(words) || Self::looks_like_electrum_v1(words) {
+            return false;
+        }
+        Self::is_type(words, mnemonic_type)
+    }
+
+    pub fn encode_bytes(
+        entropy: &[u8],
         language: &str,
         mnemonic_type: &str,
-    ) -> Result<String, Error> {
-        let mut entropy_int = bytes_to_integer(&entropy);
-
-        if !ElectrumV2Entropy::are_entropy_bits_enough(&entropy) {
-            return Err(EntropyError::new(
-                "Entropy bit length is not enough",
-                None,
-                None,
-            )
-            .into());
+    ) -> Result<String, MnemonicError> {
+        let entropy_bn = BigUint::from_bytes_be(entropy);
+        if !ElectrumV2Entropy::are_entropy_bits_enough(&entropy_bn) {
+            return Err(MnemonicError::simple("Entropy bit length is not enough for Electrum V2"));
         }
 
         let words_list = Self::get_words_list(language)?;
-
+        let n = BigUint::from(words_list.len());
+        let mut e = entropy_bn;
         let mut mnemonic: Vec<String> = Vec::new();
 
-        while entropy_int > 0 {
-            let idx = (entropy_int % words_list.len() as u128) as usize;
-            entropy_int /= words_list.len() as u128;
-            mnemonic.push(words_list[idx].clone());
+        while e > BigUint::zero() {
+            let rem = &e % &n;
+            let idx = rem
+                .to_string()
+                .parse::<usize>()
+                .map_err(|_| MnemonicError::simple("Word index overflow"))?;
+            mnemonic.push(
+                words_list
+                    .get(idx)
+                    .ok_or_else(|| MnemonicError::simple("Word index out of range"))?
+                    .clone(),
+            );
+            e /= &n;
+        }
+
+        if mnemonic.is_empty() {
+            return Err(MnemonicError::simple("Empty Electrum V2 mnemonic"));
         }
 
         if !Self::is_valid(&mnemonic, mnemonic_type) {
-            return Err(EntropyError::new(
-                "Invalid mnemonic generated",
-                None,
-                None,
-            )
-            .into());
+            return Err(MnemonicError::simple(
+                "Generated phrase failed Electrum V2 HMAC check (try another entropy)",
+            ));
         }
 
         Ok(mnemonic.join(" "))
     }
 
-    pub fn decode(
-        mnemonic: &str,
+    pub fn from_entropy_with_retries(
+        entropy_hex: &str,
+        language: &str,
         mnemonic_type: &str,
-    ) -> Result<String, Error> {
-        let words = Self::normalize_str(mnemonic);
+        max_attempts: u128,
+    ) -> Result<Self, MnemonicError> {
+        let raw = hex::decode(entropy_hex.trim())
+            .map_err(|e| MnemonicError::simple(&e.to_string()))?;
+        let mut e = BigUint::from_bytes_be(&raw);
+
+        for _ in 0..max_attempts {
+            let bytes = e.to_bytes_be();
+            if let Ok(phrase) = Self::encode_bytes(&bytes, language, mnemonic_type) {
+                return Ok(Self {
+                    phrase,
+                    mnemonic_type: mnemonic_type.to_string(),
+                });
+            }
+            e += BigUint::one();
+        }
+        Err(MnemonicError::simple(
+            "Unable to generate a valid Electrum V2 mnemonic for this entropy range",
+        ))
+    }
+
+    pub fn generate_random(
+        words: usize,
+        language: &str,
+        mnemonic_type: &str,
+    ) -> Result<Self, MnemonicError> {
+        if !Self::words_list().contains(&words) {
+            return Err(MnemonicError::simple("Invalid Electrum V2 word count"));
+        }
+        let strength = *Self::words_to_entropy_strength()
+            .get(&words)
+            .ok_or_else(|| MnemonicError::simple("Internal word count map"))?;
+        let scheme = ElectrumV2Entropy;
+        let hex_str = scheme
+            .generate(strength)
+            .map_err(|e| MnemonicError::simple(&e.to_string()))?;
+        Self::from_entropy_with_retries(&hex_str, language, mnemonic_type, 50_000)
+    }
+
+    pub fn decode_phrase(mnemonic: &str, mnemonic_type: &str) -> Result<Vec<u8>, MnemonicError> {
+        let words: Vec<String> = mnemonic
+            .split_whitespace()
+            .map(|w| w.to_lowercase())
+            .collect();
 
         if !Self::words_list().contains(&words.len()) {
-            return Err(MnemonicError::new(
-                "Invalid mnemonic words count",
-                None,
-                Some(words.len().to_string()),
-            )
-            .into());
+            return Err(MnemonicError::simple("Invalid Electrum V2 word count"));
         }
 
         if !Self::is_valid(&words, mnemonic_type) {
-            return Err(MnemonicError::new(
-                "Invalid mnemonic type",
-                None,
-                None,
-            )
-            .into());
+            return Err(MnemonicError::simple("Invalid Electrum V2 mnemonic / type"));
         }
 
-        let words_list = Self::get_words_list("english")?;
+        let words_list = Self::get_words_list(ElectrumV2MnemonicLanguages::ENGLISH)?;
         let mut map = HashMap::new();
-
         for (i, w) in words_list.iter().enumerate() {
             map.insert(w.clone(), i);
         }
 
-        let mut entropy: u128 = 0;
+        let n = BigUint::from(words_list.len());
+        let mut entropy = BigUint::zero();
 
         for word in words.iter().rev() {
-            entropy = entropy * words_list.len() as u128 + map[word] as u128;
+            let idx = BigUint::from(
+                *map
+                    .get(word)
+                    .ok_or_else(|| MnemonicError::simple("Unknown word"))?,
+            );
+            entropy = entropy * &n + idx;
         }
 
-        Ok(bytes_to_string(&integer_to_bytes(entropy)))
+        Ok(entropy.to_bytes_be())
     }
 
-    pub fn is_valid(
-        mnemonic: &Vec<String>,
-        mnemonic_type: &str,
-    ) -> bool {
-        if BIP39Mnemonic::is_valid(mnemonic)
-            || ElectrumV1Mnemonic::is_valid(mnemonic)
-        {
-            return false;
-        }
-
-        Self::is_type(mnemonic, mnemonic_type)
+    pub fn phrase(&self) -> &str {
+        &self.phrase
     }
 
-    pub fn is_type(
-        mnemonic: &Vec<String>,
-        mnemonic_type: &str,
-    ) -> bool {
-        let joined = mnemonic.join(" ");
-        let hash = hmac_sha512(b"Seed version", joined.as_bytes());
+    pub fn mnemonic_type_name(&self) -> &str {
+        &self.mnemonic_type
+    }
+}
 
-        let prefix = bytes_to_string(&hash);
-
-        prefix.starts_with(Self::mnemonic_types()[mnemonic_type])
+impl IMnemonic for ElectrumV2Mnemonic {
+    fn name() -> &'static str {
+        "Electrum-V2"
     }
 
-    pub fn normalize_str(mnemonic: &str) -> Vec<String> {
-        mnemonic
-            .split_whitespace()
-            .map(|w| w.to_lowercase())
-            .collect()
+    fn from_words(words: usize, language: &str) -> Result<String, MnemonicError> {
+        Self::generate_random(words, language, ElectrumV2MnemonicTypes::STANDARD)
+            .map(|m| m.mnemonic())
     }
 
+    fn from_entropy(entropy: &[u8], language: &str) -> Result<String, MnemonicError> {
+        Self::encode_bytes(entropy, language, ElectrumV2MnemonicTypes::STANDARD)
+    }
 
-    fn get_words_list(language: &str) -> Result<Vec<String>, Error> {
-        // TODO: load from wordlist files
-        Err(Error::new("Not implemented", None, None))
+    fn encode(entropy: &[u8], language: &str) -> Result<String, MnemonicError> {
+        Self::encode_bytes(entropy, language, ElectrumV2MnemonicTypes::STANDARD)
+    }
+
+    fn decode(mnemonic: &[String]) -> Result<Vec<u8>, MnemonicError> {
+        Self::decode_phrase(&mnemonic.join(" "), ElectrumV2MnemonicTypes::STANDARD)
+    }
+
+    fn mnemonic(&self) -> String {
+        self.phrase.clone()
+    }
+
+    fn language(&self) -> &str {
+        ElectrumV2MnemonicLanguages::ENGLISH
+    }
+
+    fn words(&self) -> usize {
+        self.phrase.split_whitespace().count()
+    }
+
+    fn mnemonic_type(&self) -> Option<&str> {
+        Some(&self.mnemonic_type)
+    }
+
+    fn words_list() -> &'static [usize] {
+        &[
+            ElectrumV2MnemonicWordCounts::TWELVE,
+            ElectrumV2MnemonicWordCounts::TWENTY_FOUR,
+        ]
+    }
+
+    fn languages() -> &'static [&'static str] {
+        &[
+            ElectrumV2MnemonicLanguages::ENGLISH,
+            ElectrumV2MnemonicLanguages::CHINESE_SIMPLIFIED,
+            ElectrumV2MnemonicLanguages::PORTUGUESE,
+            ElectrumV2MnemonicLanguages::SPANISH,
+        ]
+    }
+
+    fn wordlist_path() -> HashMap<&'static str, &'static str> {
+        HashMap::from([(
+            ElectrumV2MnemonicLanguages::ENGLISH,
+            "electrum/v2/wordlist/english.txt",
+        )])
     }
 }

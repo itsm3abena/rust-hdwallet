@@ -1,7 +1,7 @@
 pub mod mnemonic;
 
 pub use mnemonic::{
-    BIP39Mnemonic,
-    BIP39_MNEMONIC_WORDS,
-    BIP39_MNEMONIC_LANGUAGES,
+    BIP39Mnemonic, 
+    BIP39MnemonicLanguages, 
+    BIP39MnemonicWords,
 };

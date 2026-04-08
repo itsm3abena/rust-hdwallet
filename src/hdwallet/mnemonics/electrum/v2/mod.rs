@@ -2,7 +2,7 @@ pub mod mnemonic;
 
 pub use mnemonic::{
 	ElectrumV2Mnemonic,
-	ELECTRUM_V2_MNEMONIC_WORDS,
-	ELECTRUM_V2_MNEMONIC_LANGUAGES,
-	ELECTRUM_V2_MNEMONIC_TYPES
+	ElectrumV2MnemonicWordCounts,
+	ElectrumV2MnemonicLanguages,
+	ElectrumV2MnemonicTypes
 };

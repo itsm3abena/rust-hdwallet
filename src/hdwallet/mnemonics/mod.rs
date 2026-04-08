@@ -1,98 +1,102 @@
-use std::collections::HashMap;
-use std::fmt;
+pub mod algorand;
+pub mod bip39;
+pub mod electrum;
+pub mod imnemonic;
+pub mod monero;
 
-#[derive(Debug)]
-pub struct MnemonicError {
-    pub message: String,
-}
+pub use algorand::{AlgorandMnemonic, AlgorandMnemonicLanguages, AlgorandMnemonicWords};
+pub use bip39::{BIP39Mnemonic, BIP39MnemonicLanguages, BIP39MnemonicWords};
+pub use electrum::{
+    ElectrumV1Mnemonic, ElectrumV2Mnemonic, ElectrumV1MnemonicLanguages,
+    ElectrumV1MnemonicWordCounts, ElectrumV2MnemonicLanguages, ElectrumV2MnemonicTypes,
+    ElectrumV2MnemonicWordCounts,
+};
+pub use imnemonic::IMnemonic;
+pub use monero::{
+    MoneroMnemonic, MoneroMnemonicLanguages, MoneroMnemonicWordCounts,
+};
 
-impl MnemonicError {
-    pub fn new(msg: &str) -> Self {
-        Self {
-            message: msg.to_string(),
-        }
-    }
-}
-
-impl fmt::Display for MnemonicError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "MnemonicError: {}", self.message)
-    }
-}
-
-impl std::error::Error for MnemonicError {}
-
-pub trait Mnemonic {
-    fn name(&self) -> &'static str;
-}
-
-pub struct AlgorandMnemonic;
-pub struct BIP39Mnemonic;
-pub struct ElectrumV1Mnemonic;
-pub struct ElectrumV2Mnemonic;
-pub struct MoneroMnemonic;
-
-impl Mnemonic for AlgorandMnemonic {
-    fn name(&self) -> &'static str {
-        "Algorand"
-    }
-}
-
-impl Mnemonic for BIP39Mnemonic {
-    fn name(&self) -> &'static str {
-        "BIP39"
-    }
-}
-
-impl Mnemonic for ElectrumV1Mnemonic {
-    fn name(&self) -> &'static str {
-        "Electrum-V1"
-    }
-}
-
-impl Mnemonic for ElectrumV2Mnemonic {
-    fn name(&self) -> &'static str {
-        "Electrum-V2"
-    }
-}
-
-impl Mnemonic for MoneroMnemonic {
-    fn name(&self) -> &'static str {
-        "Monero"
-    }
-}
-
-type MnemonicFactory = fn() -> Box<dyn Mnemonic>;
+use crate::hdwallet::exceptions::MnemonicError;
 
 pub struct Mnemonics;
 
 impl Mnemonics {
-    fn registry() -> HashMap<&'static str, MnemonicFactory> {
-        let mut map: HashMap<&'static str, MnemonicFactory> = HashMap::new();
-
-        map.insert("Algorand", || Box::new(AlgorandMnemonic));
-        map.insert("BIP39", || Box::new(BIP39Mnemonic));
-        map.insert("Electrum-V1", || Box::new(ElectrumV1Mnemonic));
-        map.insert("Electrum-V2", || Box::new(ElectrumV2Mnemonic));
-        map.insert("Monero", || Box::new(MoneroMnemonic));
-
-        map
-    }
-
     pub fn names() -> Vec<&'static str> {
-        Self::registry().keys().cloned().collect()
+        vec![
+            BIP39Mnemonic::name(),
+            MoneroMnemonic::name(),
+            ElectrumV1Mnemonic::name(),
+            ElectrumV2Mnemonic::name(),
+            AlgorandMnemonic::name(),
+        ]
     }
 
     pub fn is_mnemonic(name: &str) -> bool {
-        Self::registry().contains_key(name)
+        matches!(
+            name,
+            "BIP39" | "Monero" | "Electrum-V1" | "Electrum-V2" | "Algorand"
+        )
     }
 
-    pub fn mnemonic(name: &str) -> Result<Box<dyn Mnemonic>, MnemonicError> {
-        let registry = Self::registry();
-
-        match registry.get(name) {
-            Some(factory) => Ok(factory()),
-            None => Err(MnemonicError::new("Invalid mnemonic name")),
+    pub fn ensure(name: &str) -> Result<(), MnemonicError> {
+        if Self::is_mnemonic(name) {
+            Ok(())
+        } else {
+            Err(MnemonicError::new(
+                "Invalid mnemonic name",
+                None,
+                Some(&Self::names().join(", ")),
+                Some(name),
+            ))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use imnemonic::IMnemonic;
+
+    #[test]
+    fn registry_lists_all() {
+        let n = Mnemonics::names();
+        assert!(n.contains(&"BIP39"));
+        assert!(n.contains(&"Monero"));
+        Mnemonics::ensure("Electrum-V1").unwrap();
+    }
+
+    #[test]
+    fn bip39_twelve_words() {
+        let s = BIP39Mnemonic::from_words(12, BIP39MnemonicLanguages::ENGLISH).unwrap();
+        assert_eq!(s.split_whitespace().count(), 12);
+    }
+
+    #[test]
+    fn electrum_v1_twelve() {
+        let s = ElectrumV1Mnemonic::from_words(12, ElectrumV1MnemonicLanguages::ENGLISH).unwrap();
+        assert_eq!(s.split_whitespace().count(), 12);
+    }
+
+    #[test]
+    fn algorand_twenty_five() {
+        let s = AlgorandMnemonic::from_words(25, AlgorandMnemonicLanguages::ENGLISH).unwrap();
+        assert_eq!(s.split_whitespace().count(), 25);
+    }
+
+    #[test]
+    fn monero_thirteen_english() {
+        let s = MoneroMnemonic::from_words(13, MoneroMnemonicLanguages::ENGLISH).unwrap();
+        assert_eq!(s.split_whitespace().count(), 13);
+    }
+
+    #[test]
+    fn electrum_v2_twelve_standard() {
+        let m = ElectrumV2Mnemonic::generate_random(
+            12,
+            ElectrumV2MnemonicLanguages::ENGLISH,
+            ElectrumV2MnemonicTypes::STANDARD,
+        )
+        .unwrap();
+        assert_eq!(m.phrase().split_whitespace().count(), 12);
     }
 }
