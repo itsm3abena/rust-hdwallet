@@ -36,13 +36,12 @@ fn normalize_lang_token(s: &str) -> String {
         .replace('_', "-")
 }
 
-/// Pulls word counts and language-like strings from mixed positional / `--flag` argv.
-fn partition_words_and_langs(tail: &[String]) -> (Vec<usize>, Vec<String>) {
+fn partition_words_and_langs(tail: &[&str]) -> (Vec<usize>, Vec<String>) {
     let mut nums = Vec::new();
     let mut strs = Vec::new();
     let mut i = 0;
     while i < tail.len() {
-        match tail[i].as_str() {
+        match tail[i] {
             "-w" | "--words" => {
                 i += 1;
                 if i < tail.len() {
@@ -54,18 +53,18 @@ fn partition_words_and_langs(tail: &[String]) -> (Vec<usize>, Vec<String>) {
             "-l" | "--language" | "--lang" => {
                 i += 1;
                 if i < tail.len() {
-                    strs.push(normalize_lang_token(&tail[i]));
+                    strs.push(normalize_lang_token(tail[i]));
                 }
             }
             "-t" | "--type" => {
                 i += 1;
                 if i < tail.len() {
-                    strs.push(tail[i].clone());
+                    strs.push(tail[i].to_string());
                 }
             }
             other => {
                 if other == "--" {
-                    // already filtered in outer args; ignore if any slipped through
+                    // ignore
                 } else if let Some(r) = other.strip_prefix("--") {
                     if r.is_empty() {
                         // nothing
@@ -103,27 +102,13 @@ fn first_language(strs: &[String], default: &str) -> String {
         .unwrap_or_else(|| default.to_string())
 }
 
-/// `from-entropy` / `--entropy` / `-e` → hex string; remaining args are parsed for `-l`/`-t`/positional.
-fn strip_electrum_v2_entropy_source(tail: &[String]) -> (Option<String>, Vec<String>) {
+fn strip_electrum_v2_entropy_source<'a>(tail: &'a [String]) -> (Option<String>, Vec<&'a str>) {
     let mut hex: Option<String> = None;
     let mut out = Vec::new();
     let mut i = 0;
     while i < tail.len() {
         match tail[i].as_str() {
-            "from-entropy" | "from_entropy" => {
-                i += 1;
-                if i < tail.len() {
-                    hex = Some(
-                        tail[i]
-                            .trim()
-                            .trim_start_matches("0x")
-                            .trim_start_matches("0X")
-                            .to_string(),
-                    );
-                    i += 1;
-                }
-            }
-            "-e" | "--entropy" => {
+            "from-entropy" | "from_entropy" | "-e" | "--entropy" => {
                 i += 1;
                 if i < tail.len() {
                     hex = Some(
@@ -137,7 +122,7 @@ fn strip_electrum_v2_entropy_source(tail: &[String]) -> (Option<String>, Vec<Str
                 }
             }
             other => {
-                out.push(other.to_string());
+                out.push(other);
                 i += 1;
             }
         }
@@ -173,6 +158,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (scheme, tail) = match args.first().map(|s| s.as_str()) {
         Some(
             s @ ("bip39" | "monero" | "electrum-v1" | "electrum-v2" | "electrumv1" | "electrumv2"
+
             | "algorand"),
         ) => {
             let norm = match s {
@@ -185,26 +171,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         _ => ("bip39", args.as_slice()),
     };
 
+    let tail_refs: Vec<&str> = tail.iter().map(|s| s.as_str()).collect();
+
     match scheme {
         "bip39" => {
-            let (nums, strs) = partition_words_and_langs(tail);
+            let (nums, strs) = partition_words_and_langs(&tail_refs);
             let wc = first_word_count(&nums, 12);
-            let lang = first_language(
-                &strs,
-                BIP39MnemonicLanguages::ENGLISH,
-            );
+            let lang = first_language(&strs, BIP39MnemonicLanguages::ENGLISH);
             let phrase = BIP39Mnemonic::from_words(wc, &lang)?;
             println!("bip39, {} words, {:?}:\n{}", wc, lang, phrase);
         }
         "monero" => {
-            let (nums, strs) = partition_words_and_langs(tail);
+            let (nums, strs) = partition_words_and_langs(&tail_refs);
             let wc = first_word_count(&nums, 13);
             let lang = first_language(&strs, MoneroMnemonicLanguages::ENGLISH);
             let phrase = MoneroMnemonic::from_words(wc, &lang)?;
             println!("monero, {} words, {:?}:\n{}", wc, lang, phrase);
         }
         "electrum-v1" => {
-            let (_nums, strs) = partition_words_and_langs(tail);
+            let (_nums, strs) = partition_words_and_langs(&tail_refs);
             let lang = first_language(&strs, ElectrumV1MnemonicLanguages::ENGLISH);
             let phrase = ElectrumV1Mnemonic::from_words(12, &lang)?;
             println!("electrum-v1, 12 words, {:?}:\n{}", lang, phrase);
@@ -237,15 +222,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let m = ElectrumV2Mnemonic::generate_random(wc, &lang, &mtype)?;
                 println!(
                     "electrum-v2, {} words, {:?}, type {:?}:\n{}",
-                    wc,
-                    lang,
-                    mtype,
-                    m.phrase()
+                    wc, lang, mtype, m.phrase()
                 );
             }
         }
         "algorand" => {
-            let (_nums, strs) = partition_words_and_langs(tail);
+            let (_nums, strs) = partition_words_and_langs(&tail_refs);
             let lang = first_language(&strs, AlgorandMnemonicLanguages::ENGLISH);
             let phrase = AlgorandMnemonic::from_words(25, &lang)?;
             println!("algorand, 25 words, {:?}:\n{}", lang, phrase);
@@ -258,3 +240,4 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+
