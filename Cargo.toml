@@ -22,3 +22,4 @@ rand = "0.8"
 num-bigint = { version = "0.4", features = ["rand"] }
 num-traits = "0.2"
 crc32fast = "1.4"
+unicode-normalization = "0.1"
