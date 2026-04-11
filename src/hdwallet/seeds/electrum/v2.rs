@@ -1,4 +1,4 @@
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
 use sha2::Sha512;
 use unicode_normalization::UnicodeNormalization;
 
@@ -101,10 +101,9 @@ impl ISeed for ElectrumV2Seed {
     }
 
     fn from_mnemonic(mnemonic: &dyn IMnemonic) -> Result<String, SeedError> {
-        Self::from_mnemonic_phrase(
-            &mnemonic.mnemonic(),
-            None,
-            ElectrumV2MnemonicTypes::STANDARD,
-        )
+        let mtype = mnemonic
+            .mnemonic_type()
+            .unwrap_or(ElectrumV2MnemonicTypes::STANDARD);
+        Self::from_mnemonic_phrase(&mnemonic.mnemonic(), None, mtype)
     }
 }

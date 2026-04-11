@@ -1,10 +1,15 @@
+use blake2::digest::{consts::U32, Digest};
+use blake2::Blake2b;
 use regex::Regex;
 
-use crate::crypto::blake2b_256;
-use crate::exceptions::{Error, MnemonicError, SeedError};
-use crate::mnemonics::{IMnemonic, bip39::BIP39Mnemonic};
-use crate::seeds::{iseed::ISeed, bip39::BIP39Seed};
-use crate::utils::{get_bytes, bytes_to_string};
+use crate::hdwallet::exceptions::{Error, MnemonicError, SeedError};
+use crate::hdwallet::mnemonics::bip39::BIP39Mnemonic;
+use crate::hdwallet::mnemonics::imnemonic::IMnemonic;
+use crate::hdwallet::seeds::{bip39::BIP39Seed, iseed::ISeed};
+
+fn blake2b_256(data: &[u8]) -> Vec<u8> {
+    Blake2b::<U32>::digest(data).to_vec()
+}
 
 pub struct CardanoTypes;
 
@@ -49,25 +54,25 @@ impl ISeed for CardanoSeed {
         &self.seed
     }
 
-    fn from_mnemonic(
-        mnemonic: &dyn IMnemonic,
-    ) -> Result<String, SeedError> {
-        Self::from_mnemonic_with_type(mnemonic.mnemonic(), None, CardanoTypes::BYRON_ICARUS)
+    fn from_mnemonic(mnemonic: &dyn IMnemonic) -> Result<String, SeedError> {
+        Self::from_mnemonic_with_type(&mnemonic.mnemonic(), None, CardanoTypes::BYRON_ICARUS)
+            .map_err(Into::into)
     }
 }
 
 impl CardanoSeed {
     const LENGTHS: [usize; 3] = [32, 128, 64];
 
-    pub fn new_with_type(
-        seed: String,
-        cardano_type: &str,
-    ) -> Result<Self, SeedError> {
+    pub fn new_with_type(seed: String, cardano_type: &str) -> Result<Self, SeedError> {
         if !CardanoTypes::all().contains(&cardano_type) {
             return Err(SeedError::new(
-                "Invalid Cardano type",
-                Some(format!("{:?}", CardanoTypes::all())),
-                Some(cardano_type.to_string()),
+                &format!(
+                    "Invalid Cardano type (expected one of {:?})",
+                    CardanoTypes::all()
+                ),
+                None,
+                None,
+                Some(cardano_type),
             ));
         }
 
@@ -95,13 +100,15 @@ impl CardanoSeed {
             CardanoTypes::BYRON_LEDGER | CardanoTypes::SHELLEY_LEDGER => {
                 Ok(seed.len() == Self::LENGTHS[1])
             }
-            CardanoTypes::BYRON_LEGACY => {
-                Ok(seed.len() == Self::LENGTHS[2])
-            }
+            CardanoTypes::BYRON_LEGACY => Ok(seed.len() == Self::LENGTHS[2]),
             _ => Err(SeedError::new(
-                "Invalid Cardano type",
-                Some(format!("{:?}", CardanoTypes::all())),
-                Some(cardano_type.to_string()),
+                &format!(
+                    "Invalid Cardano type (expected one of {:?})",
+                    CardanoTypes::all()
+                ),
+                None,
+                None,
+                Some(cardano_type),
             )),
         }
     }
@@ -113,71 +120,65 @@ impl CardanoSeed {
     ) -> Result<String, Error> {
         match cardano_type {
             CardanoTypes::BYRON_ICARUS => Self::generate_byron_icarus(mnemonic),
-            CardanoTypes::BYRON_LEDGER => {
-                Self::generate_byron_ledger(mnemonic, passphrase)
-            }
+            CardanoTypes::BYRON_LEDGER => Self::generate_byron_ledger(mnemonic, passphrase),
             CardanoTypes::BYRON_LEGACY => Self::generate_byron_legacy(mnemonic),
-            CardanoTypes::SHELLEY_ICARUS => {
-                Self::generate_shelley_icarus(mnemonic)
-            }
-            CardanoTypes::SHELLEY_LEDGER => {
-                Self::generate_shelley_ledger(mnemonic, passphrase)
-            }
+            CardanoTypes::SHELLEY_ICARUS => Self::generate_shelley_icarus(mnemonic),
+            CardanoTypes::SHELLEY_LEDGER => Self::generate_shelley_ledger(mnemonic, passphrase),
             _ => Err(Error::new(
-                "Invalid Cardano type",
-                Some(format!("{:?}", CardanoTypes::all())),
-                Some(cardano_type.to_string()),
+                &format!(
+                    "Invalid Cardano type (expected one of {:?})",
+                    CardanoTypes::all()
+                ),
+                None,
+                None,
+                Some(cardano_type),
             )),
         }
     }
 
-    pub fn generate_byron_icarus(
-        mnemonic: &str,
-    ) -> Result<String, Error> {
-        if !BIP39Mnemonic::is_valid(mnemonic) {
+    pub fn generate_byron_icarus(mnemonic: &str) -> Result<String, Error> {
+        let words: Vec<String> = mnemonic.split_whitespace().map(String::from).collect();
+        if !BIP39Mnemonic::is_valid_mnemonic_words(&words) {
             return Err(MnemonicError::new(
                 &format!("Invalid {} mnemonic words", BIP39Mnemonic::name()),
+                None,
                 None,
                 None,
             )
             .into());
         }
 
-        Ok(BIP39Mnemonic::decode(mnemonic))
+        let entropy = BIP39Mnemonic::decode(&words)?;
+        Ok(hex::encode(entropy))
     }
 
     pub fn generate_byron_ledger(
         mnemonic: &str,
         passphrase: Option<&str>,
     ) -> Result<String, Error> {
-        BIP39Seed::from_mnemonic_with_passphrase(mnemonic, passphrase)
-            .map_err(|e| e.into())
+        BIP39Seed::from_mnemonic_with_passphrase(mnemonic, passphrase).map_err(Into::into)
     }
 
-    pub fn generate_byron_legacy(
-        mnemonic: &str,
-    ) -> Result<String, Error> {
-        if !BIP39Mnemonic::is_valid(mnemonic) {
+    pub fn generate_byron_legacy(mnemonic: &str) -> Result<String, Error> {
+        let words: Vec<String> = mnemonic.split_whitespace().map(String::from).collect();
+        if !BIP39Mnemonic::is_valid_mnemonic_words(&words) {
             return Err(MnemonicError::new(
                 &format!("Invalid {} mnemonic words", BIP39Mnemonic::name()),
+                None,
                 None,
                 None,
             )
             .into());
         }
 
-        let decoded = BIP39Mnemonic::decode(mnemonic);
-        let bytes = get_bytes(decoded);
+        let entropy = BIP39Mnemonic::decode(&words)?;
+        let cbor_bytes = serde_cbor::to_vec(&entropy)
+            .map_err(|_| Error::new("CBOR encoding failed", None, None, None))?;
 
-        let cbor_bytes = serde_cbor::to_vec(&bytes)
-            .map_err(|_| Error::new("CBOR encoding failed", None, None))?;
-
-        Ok(bytes_to_string(&blake2b_256(&cbor_bytes)))
+        Ok(hex::encode(blake2b_256(&cbor_bytes)))
     }
 
-    pub fn generate_shelley_icarus(
-        mnemonic: &str,
-    ) -> Result<String, Error> {
+    pub fn generate_shelley_icarus(mnemonic: &str) -> Result<String, Error> {
         Self::generate_byron_icarus(mnemonic)
     }
 

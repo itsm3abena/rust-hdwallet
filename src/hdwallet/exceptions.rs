@@ -74,6 +74,31 @@ impl MnemonicError {
     }
 }
 define_error!(SeedError);
+
+impl From<MnemonicError> for SeedError {
+    fn from(value: MnemonicError) -> Self {
+        Self(value.0)
+    }
+}
+
+impl From<MnemonicError> for Error {
+    fn from(value: MnemonicError) -> Self {
+        value.0
+    }
+}
+
+impl From<SeedError> for Error {
+    fn from(value: SeedError) -> Self {
+        value.0
+    }
+}
+
+impl From<Error> for SeedError {
+    fn from(value: Error) -> Self {
+        Self(value)
+    }
+}
+
 define_error!(HDError);
 define_error!(DerivationError);
 define_error!(SemanticError);

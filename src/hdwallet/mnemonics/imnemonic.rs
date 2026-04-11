@@ -43,7 +43,10 @@ pub trait IMnemonic {
     where
         Self: Sized;
 
-    fn normalize(mnemonic: &str) -> Vec<String> {
+    fn normalize(mnemonic: &str) -> Vec<String>
+    where
+        Self: Sized,
+    {
         mnemonic.split_whitespace().map(|s| s.to_string()).collect()
     }
 

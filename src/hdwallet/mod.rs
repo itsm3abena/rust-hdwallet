@@ -8,11 +8,11 @@ pub mod exceptions;
 // pub mod addresses;
 pub mod entropies;
 pub mod mnemonics;
+pub mod seeds;
 
 #[cfg(test)]
 #[path = "tests/test_exceptions.rs"]
 mod test_exceptions;
 // pub mod mnemonics;
-// pub mod seeds;
 // pub mod eccs;
 // pub mod consts;

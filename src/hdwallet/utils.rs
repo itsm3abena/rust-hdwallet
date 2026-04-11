@@ -176,6 +176,32 @@ pub fn hmac_sha512(key: &[u8], data: &[u8]) -> Vec<u8> {
     mac.finalize().into_bytes().to_vec()
 }
 
+pub fn pbkdf2_hmac_sha512(password: &[u8], salt: &[u8], iterations: u32, dklen: usize) -> Vec<u8> {
+    let mut out = vec![0u8; dklen];
+    let mut offset = 0usize;
+    let mut block_num = 1u32;
+    while offset < dklen {
+        let mut mac = HmacSha512::new_from_slice(password).expect("HMAC key length");
+        mac.update(salt);
+        mac.update(&block_num.to_be_bytes());
+        let mut u = mac.finalize().into_bytes();
+        let mut t = u;
+        for _ in 1..iterations {
+            let mut mac2 = HmacSha512::new_from_slice(password).expect("HMAC key length");
+            mac2.update(&u);
+            u = mac2.finalize().into_bytes();
+            for j in 0..64 {
+                t[j] ^= u[j];
+            }
+        }
+        let len = (dklen - offset).min(64);
+        out[offset..offset + len].copy_from_slice(&t[..len]);
+        offset += len;
+        block_num = block_num.wrapping_add(1);
+    }
+    out
+}
+
 pub fn bytes_to_u32_be(data: &[u8]) -> u32 {
     let mut a = [0u8; 4];
     let n = data.len().min(4);

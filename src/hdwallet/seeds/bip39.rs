@@ -1,8 +1,8 @@
-use crate::crypto::pbkdf2_hmac_sha512;
-use crate::exceptions::{MnemonicError, SeedError};
-use crate::mnemonics::{IMnemonic, bip39::BIP39Mnemonic};
-use crate::utils::bytes_to_string;
-use crate::seeds::iseed::ISeed;
+use crate::hdwallet::exceptions::{MnemonicError, SeedError};
+use crate::hdwallet::mnemonics::bip39::BIP39Mnemonic;
+use crate::hdwallet::mnemonics::imnemonic::IMnemonic;
+use crate::hdwallet::seeds::iseed::ISeed;
+use crate::hdwallet::utils::pbkdf2_hmac_sha512;
 
 use unicode_normalization::UnicodeNormalization;
 
@@ -25,10 +25,8 @@ impl ISeed for BIP39Seed {
         &self.seed
     }
 
-    fn from_mnemonic(
-        mnemonic: &dyn IMnemonic,
-    ) -> Result<String, SeedError> {
-        Self::from_mnemonic_with_passphrase(mnemonic.mnemonic(), None)
+    fn from_mnemonic(mnemonic: &dyn IMnemonic) -> Result<String, SeedError> {
+        Self::from_mnemonic_with_passphrase(&mnemonic.mnemonic(), None)
     }
 }
 
@@ -40,13 +38,19 @@ impl BIP39Seed {
         mnemonic: &str,
         passphrase: Option<&str>,
     ) -> Result<String, SeedError> {
-        // Validate mnemonic
-        if !BIP39Mnemonic::is_valid(mnemonic) {
-            return Err(SeedError::from(MnemonicError::new(
+        let words: Vec<String> = mnemonic
+            .split_whitespace()
+            .map(|w| w.to_string())
+            .collect();
+
+        if !BIP39Mnemonic::is_valid_mnemonic_words(&words) {
+            return Err(MnemonicError::new(
                 &format!("Invalid {} mnemonic words", Self::name()),
                 None,
                 None,
-            )));
+                None,
+            )
+            .into());
         }
 
         let salt_raw = match passphrase {
@@ -62,8 +66,9 @@ impl BIP39Seed {
             normalized_mnemonic.as_bytes(),
             salt.as_bytes(),
             Self::SEED_PBKDF2_ROUNDS,
+            64,
         );
 
-        Ok(bytes_to_string(&seed_bytes))
+        Ok(hex::encode(seed_bytes))
     }
 }
