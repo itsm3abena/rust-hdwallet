@@ -1,7 +1,7 @@
 use regex::Regex;
 
-use crate::mnemonics::IMnemonic;
-use crate::exceptions::SeedError;
+use crate::hdwallet::exceptions::SeedError;
+use crate::hdwallet::mnemonics::imnemonic::IMnemonic;
 
 pub trait ISeed {
     const LENGTH: usize;

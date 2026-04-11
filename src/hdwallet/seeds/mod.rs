@@ -4,6 +4,10 @@ use once_cell::sync::Lazy;
 
 use crate::exceptions::SeedError;
 
+pub mod electrum;
+pub mod iseed;
+pub mod monero;
+
 pub trait ISeed {
     fn name() -> &'static str
     where
@@ -13,8 +17,7 @@ pub trait ISeed {
 use crate::seeds::algorand::AlgorandSeed;
 use crate::seeds::bip39::BIP39Seed;
 use crate::seeds::cardano::CardanoSeed;
-use crate::seeds::electrum::v1::ElectrumV1Seed;
-use crate::seeds::electrum::v2::ElectrumV2Seed;
+use crate::seeds::electrum::{ElectrumV1Seed, ElectrumV2Seed};
 use crate::seeds::monero::MoneroSeed;
 
 
