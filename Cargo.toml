@@ -25,3 +25,4 @@ crc32fast = "1.4"
 serde_cbor = "0.11"
 blake2 = "0.10"
 data-encoding = "2.6"
+curve25519-dalek = { version = "4.1", default-features = false }
