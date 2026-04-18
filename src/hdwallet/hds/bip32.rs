@@ -15,7 +15,9 @@ pub struct Bip32Hd {
 impl Bip32Hd {
     pub fn from_seed(network: Network, seed: &[u8]) -> Result<Self> {
         let secp = Secp256k1::new();
-        let master = Xpriv::new_master(network, seed).map_err(Error::from)?;
+        let master = Xpriv::new_master(network, seed).map_err(|e| {
+            Error::new("Invalid BIP32 master key", Some(&e.to_string()), None, None)
+        })?;
         Ok(Self {
             network,
             master,
@@ -31,7 +33,7 @@ impl Bip32Hd {
     pub fn derive_xpriv(&self, path: &DerivationPath) -> Result<Xpriv> {
         self.master
             .derive_priv(&self.secp, path)
-            .map_err(Error::from)
+            .map_err(|e| Error::new("BIP32 derivation failed", Some(&e.to_string()), None, None))
     }
 
     pub fn derive_xpub(&self, path: &DerivationPath) -> Result<Xpub> {

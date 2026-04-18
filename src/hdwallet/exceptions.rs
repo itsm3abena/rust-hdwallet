@@ -43,6 +43,8 @@ impl fmt::Display for Error {
 
 impl std::error::Error for Error {}
 
+pub type Result<T> = std::result::Result<T, Error>;
+
 macro_rules! define_error {
     ($name:ident) => {
         #[derive(Debug)]

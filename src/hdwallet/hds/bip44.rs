@@ -9,7 +9,8 @@ use crate::hdwallet::slip44::coin_types;
 /// Default BIP-44 path `m/44'/{coin}'/{account}'/{change}/{index}`.
 pub fn bip44_path(coin_type: u32, account: u32, change: u32, index: u32) -> Result<DerivationPath> {
     let s = format!("m/44'/{coin_type}'/{account}'/{change}/{index}");
-    DerivationPath::from_str(&s).map_err(|e| Error::Derivation(e.to_string()))
+    DerivationPath::from_str(&s)
+        .map_err(|e| Error::new("Invalid derivation path", Some(&e.to_string()), None, None))
 }
 
 /// Bitcoin mainnet first receive address path.
