@@ -1,8 +1,3 @@
-//! HD scheme interface (mirrors Python `hdwallet.hds.ihd.IHD`).
-//!
-//! Python exposes one wide ABC for every HD implementation; Rust keeps the same surface
-//! as **defaulted trait methods** so each scheme can override only what it supports.
-
 use crate::hdwallet::exceptions::{Error, Result};
 
 #[inline]
@@ -15,18 +10,10 @@ fn not_supported(op: &'static str) -> Error {
     )
 }
 
-/// Common derivation index list (Python `indexes()` on BIP-style HDs).
 pub type IndexList = Vec<u32>;
 
-/// Mirrors `hdwallet.hds.ihd.IHD`: one object-wide API shared by BIP32, Algorand, Monero, Electrum, etc.
-///
-/// Implementations override the methods their scheme supports; everything else keeps the
-/// default (`None` for optional data, `Err` for unsupported mutating operations).
 pub trait Ihd {
-    /// Registry / class name (Python `@classmethod name` → e.g. `"BIP32"`, `"Algorand"`).
     fn registry_name(&self) -> &'static str;
-
-    // --- construction / updates (Python mutates `self`, returns `self`) ---
 
     fn from_seed(&mut self, _seed: &[u8]) -> Result<()> {
         Err(not_supported("from_seed"))
@@ -64,7 +51,6 @@ pub trait Ihd {
         Err(not_supported("from_watch_only"))
     }
 
-    /// Until `IDerivation` is ported, pass a serialized path or scheme-specific blob.
     fn from_derivation(&mut self, _derivation: &str) -> Result<()> {
         Err(not_supported("from_derivation"))
     }
@@ -76,8 +62,6 @@ pub trait Ihd {
     fn clean_derivation(&mut self) -> Result<()> {
         Err(not_supported("clean_derivation"))
     }
-
-    // --- accessors ---
 
     fn derivation_display(&self) -> Option<String> {
         None

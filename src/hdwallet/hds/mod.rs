@@ -1,5 +1,3 @@
-//! Hierarchical deterministic schemes (mirrors `hdwallet/hds/` and Python `HDS`).
-
 pub mod bip32;
 pub mod bip44;
 pub mod bip49;
@@ -14,7 +12,6 @@ pub use ihd::{Ihd, IndexList};
 
 use crate::hdwallet::exceptions::HDError;
 
-/// Registered HD implementation (Python `HDS.dictionary` keys and `IHD` kinds).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum HdClass {
     Algorand,
@@ -31,7 +28,6 @@ pub enum HdClass {
 }
 
 impl HdClass {
-    /// Iteration order matches Python `HDS.dictionary` insertion order.
     pub const ALL: &[HdClass] = &[
         HdClass::Algorand,
         HdClass::Bip32,
@@ -63,7 +59,6 @@ impl HdClass {
         }
     }
 
-    /// Resolve a scheme by its registry name (Python `HDS.hd`).
     pub fn from_name(name: &str) -> Result<Self, HDError> {
         Self::ALL
             .iter()
@@ -95,7 +90,6 @@ impl std::fmt::Display for HdClass {
     }
 }
 
-/// Registry helpers mirroring Python `hdwallet.hds.hds.HDS`.
 pub struct Hds;
 
 impl Hds {

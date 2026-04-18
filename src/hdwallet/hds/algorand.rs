@@ -1,5 +1,5 @@
-//! Algorand hierarchical deterministic keys (mirrors `hdwallet/hds/algorand.py`).
-#![allow(non_snake_case)] // kL/kR/zL mirror Python / spec notation
+
+#![allow(non_snake_case)]
 
 use hmac::{Hmac, KeyInit, Mac};
 use num_bigint::BigUint;
@@ -76,7 +76,6 @@ fn uint256_to_le_32(x: &BigUint) -> [u8; 32] {
     out
 }
 
-/// Public key bytes used for BIP32-style fingerprint (SHA256 → RIPEMD160, first 4 bytes).
 fn fingerprint_4(pub_compressed: &[u8]) -> [u8; 4] {
     let mut s = sha2::Sha256::new();
     s.update(pub_compressed);
@@ -84,7 +83,6 @@ fn fingerprint_4(pub_compressed: &[u8]) -> [u8; 4] {
     inner[0..4].try_into().expect("ripemd160 is 20 bytes")
 }
 
-/// Algorand address (Python `AlgorandAddress.encode`): Base32 no padding over `pubkey32 || sha512_256(pubkey32)[28..32]`.
 pub fn encode_address(pub_key_32: &[u8; COORD_BYTE_LEN]) -> Result<String> {
     let h = sha512_256(pub_key_32);
     let mut payload = Vec::with_capacity(36);
@@ -101,21 +99,18 @@ pub fn encode_address(pub_key_32: &[u8; COORD_BYTE_LEN]) -> Result<String> {
     })
 }
 
-/// Kholo-style extended secret `kL || kR` (64 bytes) → compressed public key (first 32 bytes as scalar mod order, base multiply).
 fn public_from_extended_secret(ext: &[u8; 64]) -> [u8; COORD_BYTE_LEN] {
     let mut kl = [0u8; 32];
     kl.copy_from_slice(&ext[..32]);
     point_scalar_mul_base(&kl)
 }
 
-/// Algorand HD root + child derivation (Python `AlgorandHD`).
 #[derive(Debug, Clone)]
-#[allow(dead_code)] // root_* retained for future xprv / parity with Python state
+#[allow(dead_code)]
 pub struct AlgorandHd {
     seed: Vec<u8>,
     root_private_64: [u8; 64],
     root_chain_code: [u8; 32],
-    /// `Some` when hardened-capable (root / hardened-derived); cleared after non-hardened `drive`.
     private_64: Option<[u8; 64]>,
     chain_code: [u8; 32],
     public_key: [u8; COORD_BYTE_LEN],
@@ -131,7 +126,6 @@ impl AlgorandHd {
         "Algorand"
     }
 
-    /// Build from raw seed bytes (Python `from_seed` with `bytes`).
     pub fn from_seed_bytes(seed: &[u8]) -> Result<Self> {
         if seed.len() < 16 {
             return Err(Error::new(
@@ -184,14 +178,12 @@ impl AlgorandHd {
         })
     }
 
-    /// Hex seed string (Python `get_bytes` on str).
     pub fn from_seed_hex(hex: &str) -> Result<Self> {
         let bytes = hex::decode(hex.trim())
             .map_err(|_| SeedError::new("Invalid seed data", None, None, None))?;
         Self::from_seed_bytes(&bytes)
     }
 
-    /// `ISeed::seed()` hex (e.g. [`AlgorandSeed`](crate::hdwallet::seeds::AlgorandSeed)).
     pub fn from_is_seed<S: ISeed>(seed: &S) -> Result<Self> {
         Self::from_seed_hex(seed.seed())
     }
@@ -226,7 +218,6 @@ impl AlgorandHd {
         self.private_64.as_ref()
     }
 
-    /// Derive one child step (Python `drive`).
     pub fn drive(&mut self, index: u32) -> Result<&mut Self> {
         let index_bytes = index.to_le_bytes();
         let cc = self.chain_code;
@@ -330,12 +321,10 @@ impl AlgorandHd {
         Ok(self)
     }
 
-    /// Payment address for the current public key.
     pub fn address(&self) -> Result<String> {
         encode_address(&self.public_key)
     }
 
-    /// Fingerprint hex string (Python `fingerprint()`): first 8 hex chars of RIPEMD160(SHA256(pub)).
     pub fn fingerprint_hex(&self) -> String {
         let fp = fingerprint_4(&self.public_key);
         hex::encode(fp)

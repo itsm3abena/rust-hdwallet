@@ -1,5 +1,3 @@
-//! BIP-86 Taproot paths (mirrors `hdwallet/hds/bip86.py`).
-
 use bitcoin::bip32::DerivationPath;
 use std::str::FromStr;
 

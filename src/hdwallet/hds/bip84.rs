@@ -1,5 +1,3 @@
-//! BIP-84 native SegWit paths (mirrors `hdwallet/hds/bip84.py`).
-
 use bitcoin::bip32::DerivationPath;
 use std::str::FromStr;
 

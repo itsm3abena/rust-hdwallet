@@ -16,5 +16,5 @@ pub mod seeds;
 #[path = "tests/test_exceptions.rs"]
 mod test_exceptions;
 // pub mod mnemonics;
-// pub mod eccs;
+pub mod eccs;
 // pub mod consts;

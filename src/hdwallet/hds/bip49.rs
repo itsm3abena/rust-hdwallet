@@ -1,5 +1,3 @@
-//! BIP-49 nested SegWit paths (mirrors `hdwallet/hds/bip49.py`).
-
 use bitcoin::bip32::DerivationPath;
 use std::str::FromStr;
 
