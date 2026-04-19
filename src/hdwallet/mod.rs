@@ -6,7 +6,7 @@ pub mod utils;
 pub mod exceptions;
 pub mod hds;
 pub mod slip44;
-// pub mod cryptocurrencies;
+pub mod cryptocurrencies;
 // pub mod addresses;
 pub mod entropies;
 pub mod mnemonics;
