@@ -11,5 +11,6 @@ pub mod coin_types {
     pub const ZCASH: u32 = 133;
     pub const MONERO: u32 = 128;
     pub const COSMOS: u32 = 118;
+    pub const AKASH_NETWORK: u32 = 118;
     pub const TRON: u32 = 195;
 }

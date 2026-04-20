@@ -1,4 +1,5 @@
 pub mod adcoin;
+pub mod akash_network;
 pub mod bitcoin;
 pub mod dogecoin;
 pub mod ethereum;
@@ -6,6 +7,7 @@ pub mod icryptocurrency;
 pub mod litecoin;
 
 pub use adcoin::Adcoin;
+pub use akash_network::AkashNetwork;
 pub use bitcoin::Bitcoin;
 pub use dogecoin::Dogecoin;
 pub use ethereum::Ethereum;
