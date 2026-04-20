@@ -60,8 +60,8 @@ pub struct Info<'a>(pub &'a [InfoItem<'a>]);
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct NetworkDescriptor {
     pub name: &'static str,
-    pub public_key_address_prefix: Option<u8>,
-    pub script_address_prefix: Option<u8>,
+    pub public_key_address_prefix: Option<u32>,
+    pub script_address_prefix: Option<u32>,
     pub hrp: Option<&'static str>,
     pub witness_versions: Option<WitnessVersions>,
     pub xprivate_key_versions: Option<XPrivateKeyVersions>,
@@ -83,10 +83,10 @@ pub struct NetworkDescriptor {
 pub trait INetwork {
     fn name(&self) -> &'static str;
 
-    fn public_key_address_prefix(&self) -> Option<u8> {
+    fn public_key_address_prefix(&self) -> Option<u32> {
         None
     }
-    fn script_address_prefix(&self) -> Option<u8> {
+    fn script_address_prefix(&self) -> Option<u32> {
         None
     }
     fn hrp(&self) -> Option<&'static str> {
@@ -144,11 +144,11 @@ impl INetwork for NetworkDescriptor {
         self.name
     }
 
-    fn public_key_address_prefix(&self) -> Option<u8> {
+    fn public_key_address_prefix(&self) -> Option<u32> {
         self.public_key_address_prefix
     }
 
-    fn script_address_prefix(&self) -> Option<u8> {
+    fn script_address_prefix(&self) -> Option<u32> {
         self.script_address_prefix
     }
 

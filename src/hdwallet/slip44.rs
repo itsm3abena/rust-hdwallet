@@ -1,6 +1,8 @@
 pub mod coin_types {
+    pub const ADCOIN: u32 = 161;
     pub const AKASH_NETWORK: u32 = 118;
     pub const ALGORAND: u32 = 283;
+    pub const ANON: u32 = 220;
     pub const BITCOIN: u32 = 0;
     pub const TESTNET: u32 = 1;
     pub const LITECOIN: u32 = 2;

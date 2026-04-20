@@ -1,15 +1,16 @@
+use crate::hdwallet::slip44::coin_types;
+
 use super::icryptocurrency::{
     CryptocurrencyDescriptor, Info, InfoItem, InfoValue, NetworkDescriptor, XPrivateKeyVersions,
     XPublicKeyVersions,
 };
 use super::NetworkName;
-
 pub struct Mainnet;
 
 impl Mainnet {
     pub const NAME: &'static str = "mainnet";
-    pub const PUBLIC_KEY_ADDRESS_PREFIX: u8 = 0x17;
-    pub const SCRIPT_ADDRESS_PREFIX: u8 = 0x05;
+    pub const PUBLIC_KEY_ADDRESS_PREFIX: u32 = 0x17;
+    pub const SCRIPT_ADDRESS_PREFIX: u32 = 0x05;
     pub const MESSAGE_PREFIX: &'static [u8] = b"\x18AdCoin Signed Message:\n";
     pub const WIF_PREFIX: u8 = 0xb0;
     pub const XPRIVATE_KEY_VERSIONS: XPrivateKeyVersions = &[
@@ -53,7 +54,7 @@ pub struct Adcoin {
 impl Adcoin {
     pub const NAME: &'static str = "Adcoin";
     pub const SYMBOL: &'static str = "ACC";
-    pub const COIN_TYPE: u32 = 161;
+    pub const COIN_TYPE: u32 = coin_types::ADCOIN;
     pub const ECC: &'static str = "SLIP10Secp256k1ECC";
     pub const SUPPORT_BIP38: bool = true;
     pub const DEFAULT_HD: &'static str = "BIP44";
