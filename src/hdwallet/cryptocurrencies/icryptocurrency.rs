@@ -36,8 +36,10 @@ pub type AddressTypes = &'static [&'static str];
 
 pub type AddressPrefixes = &'static [&'static str];
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Params;
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct Params {
+    pub checksum_length: Option<u8>,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum InfoValue<'a> {
