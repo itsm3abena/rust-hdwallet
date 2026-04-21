@@ -40,6 +40,8 @@ pub static NETWORKS: &[(&'static str, &'static NetworkDescriptor)] = &[("MAINNET
 
 pub static ALGORAND_PARAMS: Params = Params {
     checksum_length: Some(4),
+    suffix: None,
+    address_prefix: None,
 };
 
 pub struct Algorand {
