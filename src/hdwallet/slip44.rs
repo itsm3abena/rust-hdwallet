@@ -5,6 +5,9 @@ pub mod coin_types {
     pub const ANON: u32 = 220;
     pub const APTOS: u32 = 637;
     pub const ARBITRUM: u32 = 60;
+    pub const ARGONEUM: u32 = 421;
+    pub const ARTAX: u32 = 219;
+    pub const ARYACOIN: u32 = 357;
     pub const BITCOIN: u32 = 0;
     pub const TESTNET: u32 = 1;
     pub const LITECOIN: u32 = 2;
