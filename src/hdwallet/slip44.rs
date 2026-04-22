@@ -12,6 +12,13 @@ pub mod coin_types {
     pub const AURORACOIN: u32 = 85;
     pub const AVALANCHE: u32 = 9000;
     pub const AVIAN: u32 = 921;
+    pub const AXE: u32 = 4242;
+    pub const AXELAR: u32 = 118;
+    pub const BAND_PROTOCOL: u32 = 494;
+    pub const BASE: u32 = 60;
+    pub const BELACOIN: u32 = 73;
+    pub const BATA: u32 = 89;
+    pub const BEETLECOIN: u32 = 800;
     pub const BITCOIN: u32 = 0;
     pub const TESTNET: u32 = 1;
     pub const LITECOIN: u32 = 2;
