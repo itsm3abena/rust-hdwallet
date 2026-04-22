@@ -32,7 +32,7 @@ pub type XPrivateKeyVersions = &'static [(&'static str, u32)];
 
 pub type XPublicKeyVersions = &'static [(&'static str, u32)];
 
-pub type AddressTypes = &'static [&'static str];
+pub type AddressTypes = &'static [(&'static str, &'static str)];
 
 pub type AddressPrefixes = &'static [&'static str];
 
@@ -41,6 +41,7 @@ pub struct Params {
     pub checksum_length: Option<u8>,
     pub suffix: Option<u8>,
     pub address_prefix: Option<&'static str>,
+    pub chain_prefixes_by_address_type: Option<&'static [(&'static str, &'static str)]>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

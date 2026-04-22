@@ -42,6 +42,7 @@ pub static ALGORAND_PARAMS: Params = Params {
     checksum_length: Some(4),
     suffix: None,
     address_prefix: None,
+    chain_prefixes_by_address_type: None,
 };
 
 pub struct Algorand {

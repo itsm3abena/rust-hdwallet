@@ -8,6 +8,10 @@ pub mod coin_types {
     pub const ARGONEUM: u32 = 421;
     pub const ARTAX: u32 = 219;
     pub const ARYACOIN: u32 = 357;
+    pub const ASIACOIN: u32 = 51;
+    pub const AURORACOIN: u32 = 85;
+    pub const AVALANCHE: u32 = 9000;
+    pub const AVIAN: u32 = 921;
     pub const BITCOIN: u32 = 0;
     pub const TESTNET: u32 = 1;
     pub const LITECOIN: u32 = 2;
