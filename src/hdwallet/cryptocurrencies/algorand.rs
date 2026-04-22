@@ -43,6 +43,9 @@ pub static ALGORAND_PARAMS: Params = Params {
     suffix: None,
     address_prefix: None,
     chain_prefixes_by_address_type: None,
+    alphabet: None,
+    field_size_hex: None,
+    tap_tweak_sha256: None,
 };
 
 pub struct Algorand {

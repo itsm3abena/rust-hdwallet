@@ -43,6 +43,9 @@ pub static APTOS_PARAMS: Params = Params {
     suffix: Some(0x00),
     address_prefix: Some("0x"),
     chain_prefixes_by_address_type: None,
+    alphabet: None,
+    field_size_hex: None,
+    tap_tweak_sha256: None,
 };
 
 pub struct Aptos {

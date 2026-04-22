@@ -51,6 +51,9 @@ pub static AVALANCHE_PARAMS: Params = Params {
     suffix: None,
     address_prefix: None,
     chain_prefixes_by_address_type: Some(&[("P_CHAIN", "P-"), ("X_CHAIN", "X-")]),
+    alphabet: None,
+    field_size_hex: None,
+    tap_tweak_sha256: None,
 };
 
 pub struct Avalanche {

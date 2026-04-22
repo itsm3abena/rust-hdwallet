@@ -42,6 +42,9 @@ pub struct Params {
     pub suffix: Option<u8>,
     pub address_prefix: Option<&'static str>,
     pub chain_prefixes_by_address_type: Option<&'static [(&'static str, &'static str)]>,
+    pub alphabet: Option<&'static str>,
+    pub field_size_hex: Option<&'static str>,
+    pub tap_tweak_sha256: Option<&'static str>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
