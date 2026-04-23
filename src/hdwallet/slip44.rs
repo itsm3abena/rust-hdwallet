@@ -21,6 +21,8 @@ pub mod coin_types {
     pub const BEETLECOIN: u32 = 800;
     pub const BINANCE: u32 = 714;
     pub const BITCLOUD: u32 = 218;
+    pub const BITCORE: u32 = 160;
+    pub const BITSEND: u32 = 91;
     pub const BITCOIN: u32 = 0;
     pub const BITCOIN_ATOM: u32 = 185;
     pub const TESTNET: u32 = 1;
@@ -36,6 +38,11 @@ pub mod coin_types {
     pub const BITCOIN_PRIVATE: u32 = 183;
     pub const BITCOIN_SV: u32 = 236;
     pub const BITCOIN_Z: u32 = 177;
+    pub const BLACKCOIN: u32 = 10;
+    pub const BLOCKNODE: u32 = 2941;
+    pub const BLOCK_STAMP: u32 = 254;
+    pub const BOLIVARCOIN: u32 = 278;
+    pub const BRIT_COIN: u32 = 70;
     pub const ZCASH: u32 = 133;
     pub const MONERO: u32 = 128;
     pub const COSMOS: u32 = 118;
