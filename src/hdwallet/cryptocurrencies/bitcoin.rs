@@ -249,6 +249,11 @@ pub static BITCOIN_PARAMS: Params = Params {
         "fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f",
     ),
     tap_tweak_sha256: Some("e80fe1639c9ca050e3af1b39c143c63e429cbceb15d940fbb5c5a1f4af57c5e9"),
+    cardano_wallet_types: None,
+    cardano_payment_prefix: None,
+    cardano_reward_prefix: None,
+    cardano_public_key_address: None,
+    cardano_redemption_address: None,
 };
 
 pub static DESCRIPTOR: CryptocurrencyDescriptor = CryptocurrencyDescriptor {

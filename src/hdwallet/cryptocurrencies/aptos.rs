@@ -46,6 +46,11 @@ pub static APTOS_PARAMS: Params = Params {
     alphabet: None,
     field_size_hex: None,
     tap_tweak_sha256: None,
+    cardano_wallet_types: None,
+    cardano_payment_prefix: None,
+    cardano_reward_prefix: None,
+    cardano_public_key_address: None,
+    cardano_redemption_address: None,
 };
 
 pub struct Aptos {

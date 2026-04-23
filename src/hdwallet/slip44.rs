@@ -45,6 +45,10 @@ pub mod coin_types {
     pub const BRIT_COIN: u32 = 70;
     pub const ZCASH: u32 = 133;
     pub const MONERO: u32 = 128;
+    pub const CANADA_ECOIN: u32 = 34;
+    pub const CANNACOIN: u32 = 19;
+    pub const CARDANO: u32 = 1815;
+    pub const CELO: u32 = 52752;
     pub const COSMOS: u32 = 118;
     pub const TRON: u32 = 195;
 }

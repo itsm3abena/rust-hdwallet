@@ -45,6 +45,11 @@ pub struct Params {
     pub alphabet: Option<&'static str>,
     pub field_size_hex: Option<&'static str>,
     pub tap_tweak_sha256: Option<&'static str>,
+    pub cardano_wallet_types: Option<AddressTypes>,
+    pub cardano_payment_prefix: Option<u8>,
+    pub cardano_reward_prefix: Option<u8>,
+    pub cardano_public_key_address: Option<u8>,
+    pub cardano_redemption_address: Option<u8>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
