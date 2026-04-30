@@ -49,6 +49,11 @@ pub mod coin_types {
     pub const CANNACOIN: u32 = 19;
     pub const CARDANO: u32 = 1815;
     pub const CELO: u32 = 52752;
+    pub const CHIHUAHUA: u32 = 118;
+    pub const CLAMS: u32 = 23;
+    pub const CLUB_COIN: u32 = 79;
+    pub const COMPCOIN: u32 = 71;
     pub const COSMOS: u32 = 118;
+    pub const CPU_CHAIN: u32 = 363;
     pub const TRON: u32 = 195;
 }
