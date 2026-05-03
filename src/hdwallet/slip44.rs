@@ -32,6 +32,11 @@ pub mod coin_types {
     pub const DEEP_ONION: u32 = 305;
     pub const DEFCOIN: u32 = 1337;
     pub const DENARIUS: u32 = 116;
+    pub const DIAMOND: u32 = 152;
+    pub const DIGIBYTE: u32 = 20;
+    pub const DIGITALCOIN: u32 = 18;
+    pub const DIVI: u32 = 301;
+    pub const DYDX: u32 = 22_000_118;
     pub const ETHEREUM: u32 = 60;
     pub const BITCOIN_CASH: u32 = 145;
     pub const BITCOIN_CASH_SLP: u32 = 245;

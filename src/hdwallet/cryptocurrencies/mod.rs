@@ -53,7 +53,12 @@ pub mod dash;
 pub mod deeponion;
 pub mod defcoin;
 pub mod denarius;
+pub mod diamond;
+pub mod digibyte;
+pub mod digitalcoin;
+pub mod divi;
 pub mod dogecoin;
+pub mod dydx;
 pub mod ethereum;
 pub mod icryptocurrency;
 pub mod litecoin;
@@ -113,7 +118,12 @@ pub use dash::Dash;
 pub use deeponion::DeepOnion;
 pub use defcoin::Defcoin;
 pub use denarius::Denarius;
+pub use diamond::Diamond;
+pub use digibyte::DigiByte;
+pub use digitalcoin::Digitalcoin;
+pub use divi::Divi;
 pub use dogecoin::Dogecoin;
+pub use dydx::DYdX;
 pub use ethereum::Ethereum;
 pub use icryptocurrency::{
     AddressPrefixes, AddressTypes, CryptocurrencyDescriptor, CryptocurrencyKind, ICryptocurrency,
