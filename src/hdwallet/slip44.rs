@@ -29,6 +29,9 @@ pub mod coin_types {
     pub const LITECOIN: u32 = 2;
     pub const DOGECOIN: u32 = 3;
     pub const DASH: u32 = 5;
+    pub const DEEP_ONION: u32 = 305;
+    pub const DEFCOIN: u32 = 1337;
+    pub const DENARIUS: u32 = 116;
     pub const ETHEREUM: u32 = 60;
     pub const BITCOIN_CASH: u32 = 145;
     pub const BITCOIN_CASH_SLP: u32 = 245;
@@ -54,6 +57,8 @@ pub mod coin_types {
     pub const CLUB_COIN: u32 = 79;
     pub const COMPCOIN: u32 = 71;
     pub const COSMOS: u32 = 118;
+    pub const CRANEPAY: u32 = 2304;
+    pub const CRAVE: u32 = 186;
     pub const CPU_CHAIN: u32 = 363;
     pub const TRON: u32 = 195;
 }
