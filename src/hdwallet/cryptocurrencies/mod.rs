@@ -59,7 +59,22 @@ pub mod digitalcoin;
 pub mod divi;
 pub mod dogecoin;
 pub mod dydx;
+pub mod ecash;
+pub mod ecoin;
+pub mod edrcoin;
+pub mod egulden;
+pub mod einsteinium;
+pub mod elastos;
+pub mod energi;
+pub mod eos;
+pub mod ergo;
 pub mod ethereum;
+pub mod europecoin;
+pub mod evrmore;
+pub mod exclusivecoin;
+pub mod fantom;
+pub mod feathercoin;
+pub mod fetchai;
 pub mod icryptocurrency;
 pub mod litecoin;
 
@@ -124,7 +139,22 @@ pub use digitalcoin::Digitalcoin;
 pub use divi::Divi;
 pub use dogecoin::Dogecoin;
 pub use dydx::DYdX;
+pub use ecash::Ecash;
+pub use ecoin::Ecoin;
+pub use edrcoin::Edrcoin;
+pub use egulden::Egulden;
+pub use einsteinium::Einsteinium;
+pub use elastos::Elastos;
+pub use energi::Energi;
+pub use eos::Eos;
+pub use ergo::Ergo;
 pub use ethereum::Ethereum;
+pub use europecoin::EuropeCoin;
+pub use evrmore::Evrmore;
+pub use exclusivecoin::ExclusiveCoin;
+pub use fantom::Fantom;
+pub use feathercoin::Feathercoin;
+pub use fetchai::FetchAi;
 pub use icryptocurrency::{
     AddressPrefixes, AddressTypes, CryptocurrencyDescriptor, CryptocurrencyKind, ICryptocurrency,
     INetwork, Info, InfoItem, InfoValue, NetworkDescriptor, NetworkName, Params, WitnessVersions,

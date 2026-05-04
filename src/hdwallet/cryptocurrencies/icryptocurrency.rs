@@ -50,6 +50,7 @@ pub struct Params {
     pub cardano_reward_prefix: Option<u8>,
     pub cardano_public_key_address: Option<u8>,
     pub cardano_redemption_address: Option<u8>,
+    pub address_type_codes: Option<&'static [(&'static str, u8)]>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

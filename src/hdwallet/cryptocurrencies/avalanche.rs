@@ -59,6 +59,7 @@ pub static AVALANCHE_PARAMS: Params = Params {
     cardano_reward_prefix: None,
     cardano_public_key_address: None,
     cardano_redemption_address: None,
+    address_type_codes: None,
 };
 
 pub struct Avalanche {

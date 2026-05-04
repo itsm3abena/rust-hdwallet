@@ -104,6 +104,7 @@ pub static CARDANO_PARAMS: Params = Params {
     cardano_reward_prefix: Some(0x0e),
     cardano_public_key_address: Some(0),
     cardano_redemption_address: Some(2),
+    address_type_codes: None,
 };
 
 pub struct Cardano {
