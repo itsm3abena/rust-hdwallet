@@ -96,6 +96,16 @@ pub mod coin_types {
     pub const HORIZEN: u32 = 121;
     pub const HUSH: u32 = 197;
     pub const HUOBI_TOKEN: u32 = 553;
+    pub const ICON: u32 = 74;
+    pub const INJECTIVE: u32 = 22_000_119;
+    pub const INSANE_COIN: u32 = 68;
+    pub const INTERNET_OF_PEOPLE: u32 = 66;
+    pub const IRISNET: u32 = 566;
+    pub const IX_COIN: u32 = 86;
+    pub const JUMBUCKS: u32 = 26;
+    pub const KAVA: u32 = 459;
+    pub const KOBOCOIN: u32 = 196;
+    pub const KOMODO: u32 = 141;
     pub const LITECOIN: u32 = 2;
     pub const MONERO: u32 = 128;
     pub const TESTNET: u32 = 1;

@@ -95,7 +95,17 @@ pub mod hempcoin;
 pub mod horizen;
 pub mod hush;
 pub mod huobi_token;
+pub mod icon;
 pub mod icryptocurrency;
+pub mod injective;
+pub mod insanecoin;
+pub mod internet_of_people;
+pub mod irisnet;
+pub mod ixcoin;
+pub mod jumbucks;
+pub mod kava;
+pub mod kobocoin;
+pub mod komodo;
 pub mod litecoin;
 
 pub use adcoin::Adcoin;
@@ -195,6 +205,16 @@ pub use hempcoin::Hempcoin;
 pub use horizen::Horizen;
 pub use hush::Hush;
 pub use huobi_token::HuobiToken;
+pub use icon::Icon;
+pub use injective::Injective;
+pub use insanecoin::InsaneCoin;
+pub use internet_of_people::InternetOfPeople;
+pub use irisnet::Irisnet;
+pub use ixcoin::IxCoin;
+pub use jumbucks::Jumbucks;
+pub use kava::Kava;
+pub use kobocoin::Kobocoin;
+pub use komodo::Komodo;
 pub use icryptocurrency::{
     AddressPrefixes, AddressTypes, CryptocurrencyDescriptor, CryptocurrencyKind, ICryptocurrency,
     INetwork, Info, InfoItem, InfoValue, NetworkDescriptor, NetworkName, Params, WitnessVersions,
