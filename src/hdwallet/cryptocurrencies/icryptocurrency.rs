@@ -39,6 +39,7 @@ pub type AddressPrefixes = &'static [&'static str];
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Params {
     pub checksum_length: Option<u8>,
+    pub payment_id_length: Option<u8>,
     pub suffix: Option<u8>,
     pub address_prefix: Option<&'static str>,
     pub chain_prefixes_by_address_type: Option<&'static [(&'static str, &'static str)]>,

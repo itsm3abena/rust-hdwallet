@@ -114,7 +114,15 @@ pub mod coin_types {
     pub const LITECOIN_CASH: u32 = 192;
     pub const LITECOIN_Z: u32 = 221;
     pub const LYNX: u32 = 191;
+    pub const MAZACOIN: u32 = 13;
+    pub const MEGACOIN: u32 = 217;
+    pub const METIS: u32 = 60;
+    pub const MINEXCOIN: u32 = 182;
+    pub const MONACOIN: u32 = 22;
     pub const MONERO: u32 = 128;
+    pub const MONK: u32 = 214;
+    pub const MULTIVERSX: u32 = 508;
+    pub const MYRIADCOIN: u32 = 90;
     pub const TESTNET: u32 = 1;
     pub const TRON: u32 = 195;
     pub const ZCASH: u32 = 133;

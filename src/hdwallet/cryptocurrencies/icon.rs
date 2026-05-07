@@ -41,6 +41,7 @@ pub static NETWORKS: &[(&'static str, &'static NetworkDescriptor)] = &[("MAINNET
 
 pub static ICON_PARAMS: Params = Params {
     checksum_length: None,
+    payment_id_length: None,
     suffix: None,
     address_prefix: Some("hx"),
     chain_prefixes_by_address_type: None,

@@ -77,6 +77,7 @@ pub static ADDRESS_TYPES: AddressTypes = &[("P2PKH", "p2pkh"), ("P2SH", "p2sh")]
 
 pub static ERGO_PARAMS: Params = Params {
     checksum_length: Some(4),
+    payment_id_length: None,
     suffix: None,
     address_prefix: None,
     chain_prefixes_by_address_type: None,
