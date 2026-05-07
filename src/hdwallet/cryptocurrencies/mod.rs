@@ -106,7 +106,14 @@ pub mod jumbucks;
 pub mod kava;
 pub mod kobocoin;
 pub mod komodo;
+pub mod landcoin;
+pub mod lbry_credits;
+pub mod linx;
+pub mod lkrcoin;
 pub mod litecoin;
+pub mod litecoin_cash;
+pub mod litecoin_z;
+pub mod lynx;
 
 pub use adcoin::Adcoin;
 pub use akash_network::AkashNetwork;
@@ -215,9 +222,16 @@ pub use jumbucks::Jumbucks;
 pub use kava::Kava;
 pub use kobocoin::Kobocoin;
 pub use komodo::Komodo;
+pub use landcoin::Landcoin;
+pub use lbry_credits::LbryCredits;
+pub use linx::Linx;
+pub use lkrcoin::Lkrcoin;
 pub use icryptocurrency::{
     AddressPrefixes, AddressTypes, CryptocurrencyDescriptor, CryptocurrencyKind, ICryptocurrency,
     INetwork, Info, InfoItem, InfoValue, NetworkDescriptor, NetworkName, Params, WitnessVersions,
     XPrivateKeyVersions, XPublicKeyVersions,
 };
 pub use litecoin::Litecoin;
+pub use litecoin_cash::LitecoinCash;
+pub use litecoin_z::LitecoinZ;
+pub use lynx::Lynx;

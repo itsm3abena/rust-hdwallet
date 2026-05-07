@@ -106,7 +106,14 @@ pub mod coin_types {
     pub const KAVA: u32 = 459;
     pub const KOBOCOIN: u32 = 196;
     pub const KOMODO: u32 = 141;
+    pub const LANDCOIN: u32 = 63;
+    pub const LBRY_CREDITS: u32 = 140;
+    pub const LINX: u32 = 114;
+    pub const LKRCOIN: u32 = 557;
     pub const LITECOIN: u32 = 2;
+    pub const LITECOIN_CASH: u32 = 192;
+    pub const LITECOIN_Z: u32 = 221;
+    pub const LYNX: u32 = 191;
     pub const MONERO: u32 = 128;
     pub const TESTNET: u32 = 1;
     pub const TRON: u32 = 195;
