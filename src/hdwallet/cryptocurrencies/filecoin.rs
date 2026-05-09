@@ -59,6 +59,8 @@ pub static FILECOIN_PARAMS: Params = Params {
     cardano_public_key_address: None,
     cardano_redemption_address: None,
     address_type_codes: Some(&[("SECP256K1", 1), ("BLS", 3)]),
+    address_prefix_byte: None,
+    address_version_byte: None,
 };
 
 pub struct Filecoin {

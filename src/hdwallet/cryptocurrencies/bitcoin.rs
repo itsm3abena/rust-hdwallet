@@ -256,6 +256,8 @@ pub static BITCOIN_PARAMS: Params = Params {
     cardano_public_key_address: None,
     cardano_redemption_address: None,
     address_type_codes: None,
+    address_prefix_byte: None,
+    address_version_byte: None,
 };
 
 pub static DESCRIPTOR: CryptocurrencyDescriptor = CryptocurrencyDescriptor {

@@ -90,6 +90,8 @@ pub static ERGO_PARAMS: Params = Params {
     cardano_public_key_address: None,
     cardano_redemption_address: None,
     address_type_codes: Some(&[("P2PKH", 0x01), ("P2SH", 0x02)]),
+    address_prefix_byte: None,
+    address_version_byte: None,
 };
 
 pub struct Ergo {

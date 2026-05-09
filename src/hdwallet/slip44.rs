@@ -123,6 +123,15 @@ pub mod coin_types {
     pub const MONK: u32 = 214;
     pub const MULTIVERSX: u32 = 508;
     pub const MYRIADCOIN: u32 = 90;
+    pub const NAMECOIN: u32 = 7;
+    pub const NANO: u32 = 165;
+    pub const NAVCOIN: u32 = 130;
+    pub const NEAR: u32 = 397;
+    pub const NEBLIO: u32 = 146;
+    pub const NEO: u32 = 888;
+    pub const NEOSCOIN: u32 = 25;
+    pub const NEUROCOIN: u32 = 110;
+    pub const NEUTRON: u32 = 118;
     pub const TESTNET: u32 = 1;
     pub const TRON: u32 = 195;
     pub const ZCASH: u32 = 133;
