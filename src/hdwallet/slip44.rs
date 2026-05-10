@@ -132,6 +132,12 @@ pub mod coin_types {
     pub const NEOSCOIN: u32 = 25;
     pub const NEUROCOIN: u32 = 110;
     pub const NEUTRON: u32 = 118;
+    pub const NEW_YORK_COIN: u32 = 179;
+    pub const NINE_CHRONICLES: u32 = 567;
+    pub const NIX: u32 = 400;
+    pub const NOVACOIN: u32 = 50;
+    pub const NUBITS: u32 = 12;
+    pub const NU_SHARES: u32 = 11;
     pub const TESTNET: u32 = 1;
     pub const TRON: u32 = 195;
     pub const ZCASH: u32 = 133;
