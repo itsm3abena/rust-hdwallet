@@ -61,6 +61,8 @@ pub static FILECOIN_PARAMS: Params = Params {
     address_type_codes: Some(&[("SECP256K1", 1), ("BLS", 3)]),
     address_prefix_byte: None,
     address_version_byte: None,
+    key_type: None,
+    address_type_prefix_bytes: None,
 };
 
 pub struct Filecoin {

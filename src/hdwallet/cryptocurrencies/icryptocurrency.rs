@@ -54,6 +54,8 @@ pub struct Params {
     pub address_type_codes: Option<&'static [(&'static str, u8)]>,
     pub address_prefix_byte: Option<u8>,
     pub address_version_byte: Option<u8>,
+    pub key_type: Option<u8>,
+    pub address_type_prefix_bytes: Option<&'static [(&'static str, &'static [u8])]>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

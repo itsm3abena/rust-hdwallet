@@ -57,6 +57,8 @@ pub static NEO_PARAMS: Params = Params {
     address_type_codes: None,
     address_prefix_byte: Some(0x21),
     address_version_byte: Some(0x17),
+    key_type: None,
+    address_type_prefix_bytes: None,
 };
 
 pub struct Neo {

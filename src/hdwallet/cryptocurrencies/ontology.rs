@@ -57,6 +57,8 @@ pub static ONTOLOGY_PARAMS: Params = Params {
     address_type_codes: None,
     address_prefix_byte: None,
     address_version_byte: Some(0x17),
+    key_type: None,
+    address_type_prefix_bytes: None,
 };
 
 pub struct Ontology {
