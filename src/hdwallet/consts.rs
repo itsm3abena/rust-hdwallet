@@ -112,3 +112,13 @@ impl Modes {
         vec![Self::STANDARD, Self::SEGWIT]
     }
 }
+
+pub mod semantics {
+    pub const P2PKH: &str = "p2pkh";
+    pub const P2SH: &str = "p2sh";
+    pub const P2WPKH: &str = "p2wpkh";
+    pub const P2WPKH_IN_P2SH: &str = "p2wpkh-in-p2sh";
+    pub const P2WSH: &str = "p2wsh";
+    pub const P2WSH_IN_P2SH: &str = "p2wsh-in-p2sh";
+    pub const P2TR: &str = "p2tr";
+}

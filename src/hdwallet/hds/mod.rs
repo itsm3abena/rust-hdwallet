@@ -6,7 +6,7 @@ pub mod bip86;
 pub mod ihd;
 pub mod algorand;
 
-pub use algorand::AlgorandHd;
+pub use algorand::{decode_address, encode_address, AlgorandHd};
 pub use bip32::Bip32Hd;
 pub use ihd::{Ihd, IndexList};
 

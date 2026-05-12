@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use hmac::{Hmac, KeyInit, Mac};
 use rand::{distributions::Alphanumeric, Rng};
 use sha2::{Digest, Sha512, Sha512_256};
+use sha3::Sha3_256;
 
 type HmacSha512 = Hmac<Sha512>;
 
@@ -168,6 +169,13 @@ pub fn crc32_ieee(data: &[u8]) -> u32 {
 
 pub fn sha512_256(data: &[u8]) -> [u8; 32] {
     Sha512_256::digest(data).into()
+}
+
+pub fn sha3_256(data: &[u8]) -> [u8; 32] {
+    use sha3::digest::Digest;
+    let mut h = Sha3_256::new();
+    Digest::update(&mut h, data);
+    Digest::finalize(h).into()
 }
 
 pub fn hmac_sha512(key: &[u8], data: &[u8]) -> Vec<u8> {

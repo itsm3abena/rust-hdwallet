@@ -99,6 +99,67 @@ pub fn encode_address(pub_key_32: &[u8; COORD_BYTE_LEN]) -> Result<String> {
     })
 }
 
+pub fn decode_address(address: &str) -> Result<String> {
+    const CHECKSUM_LEN: usize = 4;
+    const EXPECTED: usize = COORD_BYTE_LEN + CHECKSUM_LEN;
+
+    let hex_payload = base32::decode(address, None).map_err(|e| {
+        Error::new(
+            "Algorand address decode failed",
+            Some(&e.to_string()),
+            None,
+            None,
+        )
+    })?;
+    let raw = hex::decode(hex_payload.trim()).map_err(|e| {
+        Error::new(
+            "Algorand address invalid hex payload",
+            Some(&e.to_string()),
+            None,
+            None,
+        )
+    })?;
+    if raw.len() != EXPECTED {
+        return Err(Error::new(
+            "Invalid Algorand address length",
+            Some(&format!("expected {EXPECTED} bytes, got {}", raw.len())),
+            None,
+            None,
+        ));
+    }
+    let (pk, chk) = raw.split_at(COORD_BYTE_LEN);
+    let h = sha512_256(pk);
+    let expect_chk = &h[28..32];
+    if chk != expect_chk {
+        return Err(Error::new(
+            "Invalid Algorand address checksum",
+            Some(&format!(
+                "expected {} got {}",
+                hex::encode(expect_chk),
+                hex::encode(chk)
+            )),
+            None,
+            None,
+        ));
+    }
+    if !crate::hdwallet::libs::ed25519::point_is_on_curve_bytes(pk).map_err(|e| {
+        Error::new(
+            "Invalid Ed25519 public key",
+            Some(&e.to_string()),
+            None,
+            None,
+        )
+    })? {
+        return Err(Error::new(
+            "Invalid Ed25519 public key",
+            Some("point not on curve"),
+            None,
+            None,
+        ));
+    }
+    Ok(hex::encode(pk))
+}
+
 fn public_from_extended_secret(ext: &[u8; 64]) -> [u8; COORD_BYTE_LEN] {
     let mut kl = [0u8; 32];
     kl.copy_from_slice(&ext[..32]);
