@@ -18,11 +18,18 @@ pub type AddressEncodeResult = std::result::Result<String, AddressSchemeError>;
 
 #[derive(Debug, Default, Clone, Copy)]
 #[non_exhaustive]
-pub struct EncodeKwargs;
+pub struct EncodeKwargs {
+    pub hrp: Option<&'static str>,
+    pub address_type: Option<&'static str>,
+    pub public_key_type: Option<&'static str>,
+}
 
 #[derive(Debug, Default, Clone, Copy)]
 #[non_exhaustive]
-pub struct DecodeKwargs;
+pub struct DecodeKwargs {
+    pub hrp: Option<&'static str>,
+    pub address_type: Option<&'static str>,
+}
 
 #[derive(Debug, Clone, Copy)]
 pub enum EncodePublicKey<'a> {

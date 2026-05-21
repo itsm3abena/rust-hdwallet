@@ -1,5 +1,8 @@
 pub use super::algorand::AlgorandAddress;
 pub use super::aptos::AptosAddress;
+pub use super::avalanche::AvalancheAddress;
+pub use super::bitcoin_cash::BitcoinCashAddress;
+pub use super::cosmos::CosmosAddress;
 
 use super::iaddress::IAddress;
 
@@ -21,10 +24,7 @@ macro_rules! address_class {
     };
 }
 
-address_class!(AvalancheAddress, "Avalanche");
-address_class!(BitcoinCashAddress, "BitcoinCash");
 address_class!(CardanoAddress, "Cardano");
-address_class!(CosmosAddress, "Cosmos");
 address_class!(EOSAddress, "EOS");
 address_class!(ErgoAddress, "Ergo");
 address_class!(EthereumAddress, "Ethereum");
