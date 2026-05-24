@@ -19,7 +19,7 @@ pub struct BitcoinCashAddress;
 impl BitcoinCashAddress {
     pub const REGISTRY_NAME: &'static str = "BitcoinCash";
 
-    fn hrp(kwargs: &EncodeKwargs) -> &'static str {
+    fn hrp(kwargs: &EncodeKwargs<'_>) -> &'static str {
         kwargs.hrp.unwrap_or(BitcoinCashMainnet::HRP)
     }
 
@@ -27,7 +27,7 @@ impl BitcoinCashAddress {
         kwargs.hrp.unwrap_or(BitcoinCashMainnet::HRP)
     }
 
-    fn use_compressed(kwargs: &EncodeKwargs) -> bool {
+    fn use_compressed(kwargs: &EncodeKwargs<'_>) -> bool {
         match kwargs.public_key_type {
             None | Some(PublicKeyTypes::COMPRESSED) => true,
             Some(PublicKeyTypes::UNCOMPRESSED) => false,
@@ -72,7 +72,7 @@ impl IAddress for BitcoinCashAddress {
     fn encode(
         &self,
         public_key: EncodePublicKey<'_>,
-        kwargs: &EncodeKwargs,
+        kwargs: &EncodeKwargs<'_>,
     ) -> super::iaddress::AddressEncodeResult {
         let input = match public_key {
             EncodePublicKey::Bytes(b) => PublicKeyInput::Bytes(b),

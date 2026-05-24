@@ -85,7 +85,7 @@ pub fn base_bech32_decode(bech: &str) -> Option<(String, Vec<u8>)> {
     }
     let bech = bech.to_ascii_lowercase();
     let pos = bech.rfind('1')?;
-    if pos < 1 || pos + 7 > bech.len() || bech.len() > 90 {
+    if pos < 1 || pos + 7 > bech.len() || bech.len() > 120 {
         return None;
     }
     let tail = &bech[pos + 1..];

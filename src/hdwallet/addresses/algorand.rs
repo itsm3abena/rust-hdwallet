@@ -47,7 +47,7 @@ impl IAddress for AlgorandAddress {
     fn encode(
         &self,
         public_key: EncodePublicKey<'_>,
-        _kwargs: &EncodeKwargs,
+        _kwargs: &EncodeKwargs<'_>,
     ) -> super::iaddress::AddressEncodeResult {
         let input = match public_key {
             EncodePublicKey::Bytes(b) => PublicKeyInput::Bytes(b),

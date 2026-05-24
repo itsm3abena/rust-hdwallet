@@ -18,10 +18,17 @@ pub type AddressEncodeResult = std::result::Result<String, AddressSchemeError>;
 
 #[derive(Debug, Default, Clone, Copy)]
 #[non_exhaustive]
-pub struct EncodeKwargs {
+pub struct EncodeKwargs<'a> {
     pub hrp: Option<&'static str>,
     pub address_type: Option<&'static str>,
     pub public_key_type: Option<&'static str>,
+    pub encode_type: Option<&'static str>,
+    pub decode_type: Option<&'static str>,
+    pub network: Option<&'static str>,
+    pub path: Option<&'a str>,
+    pub chain_code: Option<&'a [u8]>,
+    pub path_key: Option<&'a [u8]>,
+    pub staking_public_key: Option<&'a [u8]>,
 }
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -29,6 +36,8 @@ pub struct EncodeKwargs {
 pub struct DecodeKwargs {
     pub hrp: Option<&'static str>,
     pub address_type: Option<&'static str>,
+    pub decode_type: Option<&'static str>,
+    pub network: Option<&'static str>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -54,7 +63,7 @@ pub trait IAddress: Send + Sync + 'static {
     fn encode(
         &self,
         public_key: EncodePublicKey<'_>,
-        kwargs: &EncodeKwargs,
+        kwargs: &EncodeKwargs<'_>,
     ) -> AddressEncodeResult {
         let _ = (public_key, kwargs);
         Err(AddressSchemeError::Unimplemented {
@@ -73,7 +82,7 @@ pub trait IAddress: Send + Sync + 'static {
 pub fn encode_with_ipublic_key<P: IPublicKey>(
     scheme: &dyn IAddress,
     pk: &P,
-    kwargs: &EncodeKwargs,
+    kwargs: &EncodeKwargs<'_>,
 ) -> AddressEncodeResult {
     let bytes = pk.raw_compressed();
     scheme.encode(EncodePublicKey::Bytes(&bytes), kwargs)

@@ -317,6 +317,30 @@ pub fn parse_wordlist_text(text: &str) -> Vec<String> {
         .collect()
 }
 
+pub fn integer_to_bytes_python(value: u32, bytes_num: Option<usize>) -> Vec<u8> {
+    let bytes_num = bytes_num.unwrap_or_else(|| {
+        let bit_len = if value == 0 { 1 } else { 32 - value.leading_zeros() };
+        ((bit_len + 7) / 8) as usize
+    });
+    let be = value.to_be_bytes();
+    be[4 - bytes_num..].to_vec()
+}
+
+pub fn blake2b_224(data: &[u8]) -> [u8; 28] {
+    use blake2::digest::{consts::U28, Digest};
+    use blake2::Blake2b;
+    Blake2b::<U28>::digest(data).into()
+}
+
+/// Python `binascii.crc32` → 4-byte big-endian integer bytes.
+pub fn crc32_be_bytes(data: &[u8]) -> [u8; 4] {
+    crc32fast::hash(data).to_be_bytes()
+}
+
+pub fn crc32_to_u32(data: &[u8]) -> u32 {
+    u32::from_be_bytes(crc32_be_bytes(data))
+}
+
 pub fn hex_to_bytes(hex: &str) -> Result<Vec<u8>, hex::FromHexError> {
     hex::decode(hex)
 }

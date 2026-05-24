@@ -17,7 +17,7 @@ pub struct CosmosAddress;
 impl CosmosAddress {
     pub const REGISTRY_NAME: &'static str = "Cosmos";
 
-    pub fn hrp(kwargs: &EncodeKwargs) -> &'static str {
+    pub fn hrp(kwargs: &EncodeKwargs<'_>) -> &'static str {
         kwargs.hrp.unwrap_or(CosmosMainnet::HRP)
     }
 
@@ -59,7 +59,7 @@ impl IAddress for CosmosAddress {
     fn encode(
         &self,
         public_key: EncodePublicKey<'_>,
-        kwargs: &EncodeKwargs,
+        kwargs: &EncodeKwargs<'_>,
     ) -> super::iaddress::AddressEncodeResult {
         let input = match public_key {
             EncodePublicKey::Bytes(b) => PublicKeyInput::Bytes(b),

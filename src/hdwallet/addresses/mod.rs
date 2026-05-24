@@ -2,6 +2,7 @@ mod algorand;
 mod aptos;
 mod avalanche;
 mod bitcoin_cash;
+mod cardano;
 mod cosmos;
 mod classes;
 pub mod iaddress;
@@ -13,13 +14,13 @@ pub mod utxo_alt;
 pub use bitcoin::encode_bitcoin_address;
 pub use avalanche::AvalancheAddress;
 pub use bitcoin_cash::BitcoinCashAddress;
+pub use cardano::CardanoAddress;
 pub use cosmos::CosmosAddress;
 pub use classes::{
     ALGORAND, APTOS, AVALANCHE, BITCOIN_CASH, CARDANO, COSMOS, EOS, ERGO, ETHEREUM, FILECOIN,
     HARMONY, ICON, INJECTIVE, MONERO, MULTIVERS_X, NANO, NEAR, NEO, OKT_CHAIN, P2PKH, P2SH, P2TR,
     P2WPKH, P2WPKH_IN_P2SH, P2WSH, P2WSH_IN_P2SH, RIPPLE, SOLANA, STELLAR, SUI, TEZOS, TRON,
-    XIN_FIN, ZILLIQA, AlgorandAddress, AptosAddress,
-    CardanoAddress, EOSAddress, ErgoAddress, EthereumAddress, FilecoinAddress,
+    XIN_FIN, ZILLIQA,     AlgorandAddress, AptosAddress, EOSAddress, ErgoAddress, EthereumAddress, FilecoinAddress,
     HarmonyAddress, IconAddress, InjectiveAddress, MoneroAddress, MultiversXAddress, NanoAddress,
     NearAddress, NeoAddress, OKTChainAddress, P2PKHAddress, P2SHAddress, P2TRAddress,
     P2WPKHAddress, P2WPKHInP2SHAddress, P2WSHAddress, P2WSHInP2SHAddress, RippleAddress,

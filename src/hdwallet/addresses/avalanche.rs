@@ -45,11 +45,18 @@ impl AvalancheAddress {
             })
     }
 
-    fn encode_kwargs(kwargs: &EncodeKwargs) -> EncodeKwargs {
+    fn encode_kwargs<'a>(kwargs: &'a EncodeKwargs<'a>) -> EncodeKwargs<'a> {
         EncodeKwargs {
             hrp: Some(kwargs.hrp.unwrap_or(AvalancheMainnet::HRP)),
             address_type: kwargs.address_type,
             public_key_type: kwargs.public_key_type,
+            encode_type: kwargs.encode_type,
+            decode_type: kwargs.decode_type,
+            network: kwargs.network,
+            path: kwargs.path,
+            chain_code: kwargs.chain_code,
+            path_key: kwargs.path_key,
+            staking_public_key: kwargs.staking_public_key,
         }
     }
 
@@ -57,6 +64,8 @@ impl AvalancheAddress {
         DecodeKwargs {
             hrp: Some(kwargs.hrp.unwrap_or(AvalancheMainnet::HRP)),
             address_type: kwargs.address_type,
+            decode_type: kwargs.decode_type,
+            network: kwargs.network,
         }
     }
 }
@@ -69,7 +78,7 @@ impl IAddress for AvalancheAddress {
     fn encode(
         &self,
         public_key: EncodePublicKey<'_>,
-        kwargs: &EncodeKwargs,
+        kwargs: &EncodeKwargs<'_>,
     ) -> super::iaddress::AddressEncodeResult {
         let prefix = Self::resolve_prefix(kwargs.address_type)?;
         let cosmos_kwargs = Self::encode_kwargs(kwargs);
