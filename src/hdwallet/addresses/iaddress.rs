@@ -29,6 +29,7 @@ pub struct EncodeKwargs<'a> {
     pub chain_code: Option<&'a [u8]>,
     pub path_key: Option<&'a [u8]>,
     pub staking_public_key: Option<&'a [u8]>,
+    pub skip_checksum_encode: Option<bool>,
 }
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -38,6 +39,7 @@ pub struct DecodeKwargs {
     pub address_type: Option<&'static str>,
     pub decode_type: Option<&'static str>,
     pub network: Option<&'static str>,
+    pub skip_checksum_encode: Option<bool>,
 }
 
 #[derive(Debug, Clone, Copy)]

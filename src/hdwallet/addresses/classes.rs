@@ -4,6 +4,10 @@ pub use super::avalanche::AvalancheAddress;
 pub use super::bitcoin_cash::BitcoinCashAddress;
 pub use super::cardano::CardanoAddress;
 pub use super::cosmos::CosmosAddress;
+pub use super::eos::EOSAddress;
+pub use super::ergo::ErgoAddress;
+pub use super::ethereum::EthereumAddress;
+pub use super::filecoin::FilecoinAddress;
 
 use super::iaddress::IAddress;
 
@@ -25,10 +29,6 @@ macro_rules! address_class {
     };
 }
 
-address_class!(EOSAddress, "EOS");
-address_class!(ErgoAddress, "Ergo");
-address_class!(EthereumAddress, "Ethereum");
-address_class!(FilecoinAddress, "Filecoin");
 address_class!(HarmonyAddress, "Harmony");
 address_class!(IconAddress, "Icon");
 address_class!(InjectiveAddress, "Injective");

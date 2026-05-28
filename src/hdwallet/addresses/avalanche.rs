@@ -57,6 +57,7 @@ impl AvalancheAddress {
             chain_code: kwargs.chain_code,
             path_key: kwargs.path_key,
             staking_public_key: kwargs.staking_public_key,
+            skip_checksum_encode: kwargs.skip_checksum_encode,
         }
     }
 
@@ -66,6 +67,7 @@ impl AvalancheAddress {
             address_type: kwargs.address_type,
             decode_type: kwargs.decode_type,
             network: kwargs.network,
+            skip_checksum_encode: kwargs.skip_checksum_encode,
         }
     }
 }
