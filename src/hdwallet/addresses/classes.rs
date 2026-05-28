@@ -8,6 +8,15 @@ pub use super::eos::EOSAddress;
 pub use super::ergo::ErgoAddress;
 pub use super::ethereum::EthereumAddress;
 pub use super::filecoin::FilecoinAddress;
+pub use super::harmony::HarmonyAddress;
+pub use super::icon::IconAddress;
+pub use super::injective::InjectiveAddress;
+pub use super::monero::MoneroAddress;
+pub use super::multivers_x::MultiversXAddress;
+pub use super::nano::NanoAddress;
+pub use super::near::NearAddress;
+pub use super::neo::NeoAddress;
+pub use super::okt_chain::OKTChainAddress;
 
 use super::iaddress::IAddress;
 
@@ -29,15 +38,6 @@ macro_rules! address_class {
     };
 }
 
-address_class!(HarmonyAddress, "Harmony");
-address_class!(IconAddress, "Icon");
-address_class!(InjectiveAddress, "Injective");
-address_class!(MoneroAddress, "Monero");
-address_class!(MultiversXAddress, "MultiversX");
-address_class!(NanoAddress, "Nano");
-address_class!(NearAddress, "Near");
-address_class!(NeoAddress, "Neo");
-address_class!(OKTChainAddress, "OKT-Chain");
 address_class!(P2PKHAddress, "P2PKH");
 address_class!(P2SHAddress, "P2SH");
 address_class!(P2TRAddress, "P2TR");

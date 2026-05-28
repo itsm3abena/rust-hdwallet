@@ -344,7 +344,12 @@ pub fn blake2b_160(data: &[u8]) -> [u8; 20] {
     Blake2b::<U20>::digest(data).into()
 }
 
-/// Python `binascii.crc32` → 4-byte big-endian integer bytes.
+pub fn blake2b_40(data: &[u8]) -> [u8; 5] {
+    use blake2::digest::{consts::U5, Digest};
+    use blake2::Blake2b;
+    Blake2b::<U5>::digest(data).into()
+}
+
 pub fn crc32_be_bytes(data: &[u8]) -> [u8; 4] {
     crc32fast::hash(data).to_be_bytes()
 }
