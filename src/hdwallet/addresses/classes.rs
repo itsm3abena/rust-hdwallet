@@ -17,6 +17,9 @@ pub use super::nano::NanoAddress;
 pub use super::near::NearAddress;
 pub use super::neo::NeoAddress;
 pub use super::okt_chain::OKTChainAddress;
+pub use super::p2pkh::P2PKHAddress;
+pub use super::p2sh::P2SHAddress;
+pub use super::p2tr::P2TRAddress;
 
 use super::iaddress::IAddress;
 
@@ -38,9 +41,6 @@ macro_rules! address_class {
     };
 }
 
-address_class!(P2PKHAddress, "P2PKH");
-address_class!(P2SHAddress, "P2SH");
-address_class!(P2TRAddress, "P2TR");
 address_class!(P2WPKHAddress, "P2WPKH");
 address_class!(P2WPKHInP2SHAddress, "P2WPKH-In-P2SH");
 address_class!(P2WSHAddress, "P2WSH");

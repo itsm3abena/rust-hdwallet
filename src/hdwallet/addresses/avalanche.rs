@@ -58,6 +58,10 @@ impl AvalancheAddress {
             path_key: kwargs.path_key,
             staking_public_key: kwargs.staking_public_key,
             skip_checksum_encode: kwargs.skip_checksum_encode,
+            public_key_address_prefix: kwargs.public_key_address_prefix,
+            script_address_prefix: kwargs.script_address_prefix,
+            witness_version: kwargs.witness_version,
+            alphabet: kwargs.alphabet,
         }
     }
 
@@ -68,6 +72,10 @@ impl AvalancheAddress {
             decode_type: kwargs.decode_type,
             network: kwargs.network,
             skip_checksum_encode: kwargs.skip_checksum_encode,
+            public_key_address_prefix: kwargs.public_key_address_prefix,
+            script_address_prefix: kwargs.script_address_prefix,
+            witness_version: kwargs.witness_version,
+            alphabet: kwargs.alphabet,
         }
     }
 }

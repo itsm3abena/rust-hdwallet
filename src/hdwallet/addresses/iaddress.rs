@@ -32,6 +32,10 @@ pub struct EncodeKwargs<'a> {
     pub path_key: Option<&'a [u8]>,
     pub staking_public_key: Option<&'a [u8]>,
     pub skip_checksum_encode: Option<bool>,
+    pub public_key_address_prefix: Option<u32>,
+    pub script_address_prefix: Option<u32>,
+    pub witness_version: Option<u8>,
+    pub alphabet: Option<&'static str>,
 }
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -42,6 +46,10 @@ pub struct DecodeKwargs {
     pub decode_type: Option<&'static str>,
     pub network: Option<&'static str>,
     pub skip_checksum_encode: Option<bool>,
+    pub public_key_address_prefix: Option<u32>,
+    pub script_address_prefix: Option<u32>,
+    pub witness_version: Option<u8>,
+    pub alphabet: Option<&'static str>,
 }
 
 #[derive(Debug, Clone, Copy)]
