@@ -20,6 +20,9 @@ pub use super::okt_chain::OKTChainAddress;
 pub use super::p2pkh::P2PKHAddress;
 pub use super::p2sh::P2SHAddress;
 pub use super::p2tr::P2TRAddress;
+pub use super::p2wpkh::P2WPKHAddress;
+pub use super::p2wpkh_in_p2sh::P2WPKHInP2SHAddress;
+pub use super::p2wsh::P2WSHAddress;
 
 use super::iaddress::IAddress;
 
@@ -41,9 +44,6 @@ macro_rules! address_class {
     };
 }
 
-address_class!(P2WPKHAddress, "P2WPKH");
-address_class!(P2WPKHInP2SHAddress, "P2WPKH-In-P2SH");
-address_class!(P2WSHAddress, "P2WSH");
 address_class!(P2WSHInP2SHAddress, "P2WSH-In-P2SH");
 address_class!(RippleAddress, "Ripple");
 address_class!(SolanaAddress, "Solana");

@@ -19,6 +19,9 @@ mod okt_chain;
 mod p2pkh;
 mod p2sh;
 mod p2tr;
+mod p2wpkh;
+mod p2wpkh_in_p2sh;
+mod p2wsh;
 mod classes;
 pub mod iaddress;
 
@@ -44,13 +47,16 @@ pub use okt_chain::OKTChainAddress;
 pub use p2pkh::P2PKHAddress;
 pub use p2sh::P2SHAddress;
 pub use p2tr::P2TRAddress;
+pub use p2wpkh::P2WPKHAddress;
+pub use p2wpkh_in_p2sh::P2WPKHInP2SHAddress;
+pub use p2wsh::P2WSHAddress;
 pub use classes::{
     ALGORAND, APTOS, AVALANCHE, BITCOIN_CASH, CARDANO, COSMOS, EOS, ERGO, ETHEREUM, FILECOIN,
     HARMONY, ICON, INJECTIVE, MONERO, MULTIVERS_X, NANO, NEAR, NEO, OKT_CHAIN, P2PKH, P2SH,
-    P2WPKH, P2WPKH_IN_P2SH, P2WSH, P2WSH_IN_P2SH, RIPPLE, SOLANA, STELLAR, SUI, TEZOS, TRON,
+    P2WSH_IN_P2SH, RIPPLE, SOLANA, STELLAR, SUI, TEZOS, TRON,
     XIN_FIN, ZILLIQA, AlgorandAddress, AptosAddress, NanoAddress,
     NearAddress, NeoAddress,
-    P2WPKHAddress, P2WPKHInP2SHAddress, P2WSHAddress, P2WSHInP2SHAddress, RippleAddress,
+    P2WSHInP2SHAddress, RippleAddress,
     SolanaAddress, StellarAddress, SuiAddress, TezosAddress, TronAddress, XinFinAddress,
     ZilliqaAddress,
 };

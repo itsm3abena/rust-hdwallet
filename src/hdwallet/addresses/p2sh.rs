@@ -27,13 +27,13 @@ impl P2SHAddress {
         BitcoinMainnet::SCRIPT_ADDRESS_PREFIX
     }
 
-    fn script_address_prefix_encode(kwargs: &EncodeKwargs<'_>) -> u32 {
+    pub(crate) fn script_address_prefix_encode(kwargs: &EncodeKwargs<'_>) -> u32 {
         kwargs
             .script_address_prefix
             .unwrap_or_else(|| Self::script_address_prefix_from_network(kwargs.network))
     }
 
-    fn script_address_prefix_decode(kwargs: &DecodeKwargs) -> u32 {
+    pub(crate) fn script_address_prefix_decode(kwargs: &DecodeKwargs) -> u32 {
         kwargs
             .script_address_prefix
             .unwrap_or_else(|| Self::script_address_prefix_from_network(kwargs.network))
@@ -58,7 +58,7 @@ impl P2SHAddress {
         })
     }
 
-    fn use_compressed_public_key(kwargs: &EncodeKwargs<'_>) -> bool {
+    pub(crate) fn use_compressed_public_key(kwargs: &EncodeKwargs<'_>) -> bool {
         !matches!(
             kwargs.public_key_type,
             Some(PublicKeyTypes::UNCOMPRESSED)
@@ -69,6 +69,22 @@ impl P2SHAddress {
         let script_hex = format!("76a914{}88ac", hex::encode(pubkey_hash));
         let script_bytes = hex::decode(&script_hex).expect("valid P2PKH script hex");
         hash160(&script_bytes)
+    }
+
+    pub(crate) fn script_hash_from_nested_p2wpkh(pubkey_hash: &[u8; HASH_LEN]) -> [u8; HASH_LEN] {
+        let script_hex = format!("0014{}", hex::encode(pubkey_hash));
+        let script_bytes = hex::decode(&script_hex).expect("valid nested P2WPKH script hex");
+        hash160(&script_bytes)
+    }
+
+    pub(crate) fn encode_script_hash(
+        script_hash: &[u8; HASH_LEN],
+        prefix: u32,
+        alphabet: Option<&'static str>,
+    ) -> String {
+        let mut raw = Self::prefix_bytes(prefix);
+        raw.extend_from_slice(script_hash);
+        base58::check_encode(&raw, Some(Self::alphabet(alphabet)))
     }
 
     fn map_base58(err: Base58Error) -> AddressSchemeError {
@@ -83,9 +99,7 @@ impl P2SHAddress {
     ) -> String {
         let pubkey_hash = P2PKHAddress::public_key_hash(pk, compressed);
         let script_hash = Self::script_hash_from_public_key_hash(&pubkey_hash);
-        let mut raw = Self::prefix_bytes(prefix);
-        raw.extend_from_slice(&script_hash);
-        base58::check_encode(&raw, Some(Self::alphabet(alphabet)))
+        Self::encode_script_hash(&script_hash, prefix, alphabet)
     }
 
     pub(crate) fn decode_address(
