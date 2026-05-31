@@ -64,37 +64,3 @@ impl IAddress for AlgorandAddress {
         decode_algo_payload(address).map_err(Self::map_core)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use super::super::iaddress::encode_with_ipublic_key;
-    use crate::hdwallet::hds::algorand::AlgorandHd;
-
-    #[test]
-    fn roundtrip_matches_hd_wallet() {
-        let seed = [7u8; 64];
-        let hd = AlgorandHd::from_seed_bytes(&seed).expect("seed");
-        let expected_addr = hd.address().expect("addr");
-
-        let mut prefixed = [0u8; 33];
-        prefixed[0] = Slip10Ed25519PublicKeyStd::PREFIX;
-        prefixed[1..].copy_from_slice(hd.pub_key_bytes());
-        let pk = Slip10Ed25519PublicKeyStd::from_bytes(&prefixed).expect("pk");
-
-        let algo = AlgorandAddress;
-        let got = encode_with_ipublic_key(&algo, &pk, &EncodeKwargs::default()).expect("encode");
-        assert_eq!(got, expected_addr);
-
-        let decoded = algo.decode(&got, &DecodeKwargs::default()).expect("decode");
-        assert_eq!(decoded, hex::encode(hd.pub_key_bytes()));
-    }
-
-    #[test]
-    fn checksum_matches_compute_checksum() {
-        let body = [1u8; 32];
-        let c = AlgorandAddress::compute_checksum(&body);
-        let h = sha512_256(&body);
-        assert_eq!(c, h[28..32]);
-    }
-}

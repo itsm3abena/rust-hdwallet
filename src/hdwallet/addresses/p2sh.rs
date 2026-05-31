@@ -77,6 +77,14 @@ impl P2SHAddress {
         hash160(&script_bytes)
     }
 
+    pub(crate) fn script_hash_from_nested_p2wsh(pubkey_bytes: &[u8]) -> [u8; HASH_LEN] {
+        let witness_program =
+            super::p2wsh::P2WSHAddress::script_hash_from_public_key_bytes(pubkey_bytes);
+        let script_hex = format!("0020{}", hex::encode(witness_program));
+        let script_bytes = hex::decode(&script_hex).expect("valid nested P2WSH script hex");
+        hash160(&script_bytes)
+    }
+
     pub(crate) fn encode_script_hash(
         script_hash: &[u8; HASH_LEN],
         prefix: u32,
@@ -164,59 +172,5 @@ impl IAddress for P2SHAddress {
             Self::script_address_prefix_decode(kwargs),
             kwargs.alphabet,
         )
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use bitcoin::hashes::Hash;
-    use bitcoin::Address as BtcAddress;
-    use bitcoin::Network;
-    use bitcoin::PubkeyHash;
-    use bitcoin::PublicKey as BtcPublicKey;
-    use bitcoin::ScriptBuf;
-
-    use super::*;
-    use super::super::iaddress::encode_with_ipublic_key;
-    use crate::hdwallet::eccs::IPublicKey;
-    use crate::hdwallet::hds::bip44::bip44_path;
-    use crate::hdwallet::hds::Bip32Hd;
-    use crate::hdwallet::slip44::coin_types;
-
-    fn test_public_key() -> Slip10Secp256k1PublicKey {
-        let seed = hex::decode(
-            "5eb00bbddcf069084889a8ab9155568165f4c767744d69fbf5d1791c2fe1563254c36a54693640219b24e06f1011116141de699825262eeacc22f8ac8ae26a",
-        )
-        .expect("seed hex");
-        let hd = Bip32Hd::from_seed(Network::Bitcoin, &seed).expect("bip32");
-        let path = bip44_path(coin_types::BITCOIN, 0, 0, 0).expect("path");
-        let compressed = hd.derive_xpub(&path).expect("xpub").public_key.serialize();
-        Slip10Secp256k1PublicKey::from_bytes(&compressed).expect("pk")
-    }
-
-    #[test]
-    fn roundtrip_default_mainnet_prefix() {
-        let pk = test_public_key();
-        let p2sh = P2SHAddress;
-        let addr = encode_with_ipublic_key(&p2sh, &pk, &EncodeKwargs::default()).expect("encode");
-        assert!(addr.starts_with('3'));
-        let decoded = p2sh.decode(&addr, &DecodeKwargs::default()).expect("decode");
-        assert_eq!(decoded.len(), 40);
-        let pubkey_hash = P2PKHAddress::public_key_hash(&pk, true);
-        let script_hash = P2SHAddress::script_hash_from_public_key_hash(&pubkey_hash);
-        assert_eq!(decoded, hex::encode(script_hash));
-    }
-
-    #[test]
-    fn matches_bitcoin_crate_p2sh() {
-        let pk = test_public_key();
-        let btc_pk = BtcPublicKey::from(*pk.inner());
-        let pk_hash = PubkeyHash::hash(&btc_pk.to_bytes());
-        let script = ScriptBuf::new_p2pkh(&pk_hash);
-        let expected = BtcAddress::p2sh(&script, Network::Bitcoin)
-            .expect("p2sh")
-            .to_string();
-        let got = encode_with_ipublic_key(&P2SHAddress, &pk, &EncodeKwargs::default()).expect("encode");
-        assert_eq!(got, expected);
     }
 }

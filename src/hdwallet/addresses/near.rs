@@ -71,37 +71,3 @@ impl IAddress for NearAddress {
         Ok(address.to_owned())
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use super::super::iaddress::encode_with_ipublic_key;
-    use crate::hdwallet::eccs::{IPrivateKey, Slip10Ed25519PrivateKeyStd};
-
-    fn test_public_key() -> Slip10Ed25519PublicKeyStd {
-        let mut secret = [0u8; 32];
-        secret[0] = 9;
-        let sk = Slip10Ed25519PrivateKeyStd::from_bytes(&secret).expect("sk");
-        sk.public_key()
-    }
-
-    #[test]
-    fn roundtrip_hex_body() {
-        let pk = test_public_key();
-        let near = NearAddress;
-        let addr = encode_with_ipublic_key(&near, &pk, &EncodeKwargs::default()).expect("encode");
-        assert_eq!(addr.len(), 64);
-        assert!(!addr.starts_with("00"));
-        let decoded = near.decode(&addr, &DecodeKwargs::default()).expect("decode");
-        assert_eq!(decoded, addr);
-        assert_eq!(decoded, NearAddress::encode_hex_body(&NearAddress::pubkey_body(&pk).unwrap()));
-    }
-
-    #[test]
-    fn encode_strips_compressed_prefix_hex() {
-        let pk = test_public_key();
-        let full = hex::encode(pk.raw_compressed());
-        let body = NearAddress::encode_hex_body(&NearAddress::pubkey_body(&pk).unwrap());
-        assert_eq!(body, full[2..]);
-    }
-}

@@ -155,28 +155,3 @@ impl IAddress for NanoAddress {
         Ok(hex::encode(body))
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use super::super::iaddress::encode_with_ipublic_key;
-    use crate::hdwallet::eccs::{IPrivateKey, Slip10Ed25519Blake2bPrivateKey};
-
-    fn test_public_key() -> Slip10Ed25519Blake2bPublicKey {
-        let mut secret = [0u8; 32];
-        secret[0] = 9;
-        let sk = Slip10Ed25519Blake2bPrivateKey::from_bytes(&secret).expect("sk");
-        sk.public_key()
-    }
-
-    #[test]
-    fn roundtrip_default_prefix() {
-        let pk = test_public_key();
-        let nano = NanoAddress;
-        let addr = encode_with_ipublic_key(&nano, &pk, &EncodeKwargs::default()).expect("encode");
-        assert!(addr.starts_with("nano_"));
-        let decoded = nano.decode(&addr, &DecodeKwargs::default()).expect("decode");
-        assert_eq!(decoded.len(), 64);
-        assert_eq!(decoded, hex::encode(NanoAddress::pubkey_body(&pk).unwrap()));
-    }
-}

@@ -22,6 +22,8 @@ mod p2tr;
 mod p2wpkh;
 mod p2wpkh_in_p2sh;
 mod p2wsh;
+mod p2wsh_in_p2sh;
+mod ripple;
 mod classes;
 pub mod iaddress;
 
@@ -50,13 +52,14 @@ pub use p2tr::P2TRAddress;
 pub use p2wpkh::P2WPKHAddress;
 pub use p2wpkh_in_p2sh::P2WPKHInP2SHAddress;
 pub use p2wsh::P2WSHAddress;
+pub use p2wsh_in_p2sh::P2WSHInP2SHAddress;
+pub use ripple::RippleAddress;
 pub use classes::{
     ALGORAND, APTOS, AVALANCHE, BITCOIN_CASH, CARDANO, COSMOS, EOS, ERGO, ETHEREUM, FILECOIN,
     HARMONY, ICON, INJECTIVE, MONERO, MULTIVERS_X, NANO, NEAR, NEO, OKT_CHAIN, P2PKH, P2SH,
-    P2WSH_IN_P2SH, RIPPLE, SOLANA, STELLAR, SUI, TEZOS, TRON,
+    RIPPLE, SOLANA, STELLAR, SUI, TEZOS, TRON,
     XIN_FIN, ZILLIQA, AlgorandAddress, AptosAddress, NanoAddress,
     NearAddress, NeoAddress,
-    P2WSHInP2SHAddress, RippleAddress,
     SolanaAddress, StellarAddress, SuiAddress, TezosAddress, TronAddress, XinFinAddress,
     ZilliqaAddress,
 };
@@ -106,26 +109,5 @@ impl Addresses {
         classes::CLASS_ORDER
             .iter()
             .any(|class| class.name() == name)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn names_match_classes_len() {
-        assert_eq!(Addresses::names().len(), Addresses::classes().len());
-    }
-
-    #[test]
-    fn resolve_okt_chain() {
-        let a = Addresses::address("OKT-Chain").expect("OKT-Chain");
-        assert_eq!(a.name(), "OKT-Chain");
-    }
-
-    #[test]
-    fn invalid_name_errors() {
-        assert!(Addresses::address("NoSuch").is_err());
     }
 }

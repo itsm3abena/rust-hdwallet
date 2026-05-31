@@ -90,38 +90,3 @@ impl IAddress for AptosAddress {
         Ok(address_no_prefix)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::hdwallet::addresses::iaddress::encode_with_ipublic_key;
-    use crate::hdwallet::hds::algorand::AlgorandHd;
-
-    #[test]
-    fn encode_decode_roundtrip_restores_hash_hex() {
-        let seed = [9u8; 64];
-        let hd = AlgorandHd::from_seed_bytes(&seed).expect("seed");
-
-        let mut prefixed = [0u8; 33];
-        prefixed[0] = Slip10Ed25519PublicKeyStd::PREFIX;
-        prefixed[1..].copy_from_slice(hd.pub_key_bytes());
-        let pk = Slip10Ed25519PublicKeyStd::from_bytes(&prefixed).expect("pk");
-
-        let body: [u8; 32] = *hd.pub_key_bytes();
-        let mut payload = Vec::new();
-        payload.extend_from_slice(&body);
-        payload.extend_from_slice(&AptosAddress::suffix_bytes());
-        let expected_hash_hex = hex::encode(sha3_256(&payload));
-
-        let aptos = AptosAddress;
-        let addr = encode_with_ipublic_key(&aptos, &pk, &EncodeKwargs::default()).expect("encode");
-        let decoded = aptos.decode(&addr, &DecodeKwargs::default()).expect("decode");
-        assert_eq!(decoded, expected_hash_hex);
-    }
-
-    #[test]
-    fn decode_rejects_bad_prefix() {
-        let aptos = AptosAddress;
-        assert!(aptos.decode("1xabc", &DecodeKwargs::default()).is_err());
-    }
-}

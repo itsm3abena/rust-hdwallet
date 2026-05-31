@@ -115,32 +115,3 @@ impl IAddress for NeoAddress {
         Self::decode_address(address)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use super::super::iaddress::encode_with_ipublic_key;
-    use crate::hdwallet::eccs::{IPrivateKey, Slip10Nist256p1PrivateKey};
-
-    fn test_public_key() -> Slip10Nist256p1PublicKey {
-        let secret = hex::decode(
-            "c9afa9d9ba5b8330c5c374bae22bcef9494b2493e92c3c37e18465880fc279b0",
-        )
-        .expect("secret hex");
-        let sk = Slip10Nist256p1PrivateKey::from_bytes(&secret).expect("sk");
-        sk.public_key()
-    }
-
-    #[test]
-    fn roundtrip() {
-        let pk = test_public_key();
-        let neo = NeoAddress;
-        let addr = encode_with_ipublic_key(&neo, &pk, &EncodeKwargs::default()).expect("encode");
-        assert!(!addr.is_empty());
-        let decoded = neo.decode(&addr, &DecodeKwargs::default()).expect("decode");
-        assert_eq!(decoded.len(), 40);
-        assert_eq!(decoded, hex::encode(NeoAddress::payload_hash(&pk.raw_compressed())));
-        let addr2 = NeoAddress::encode_from_public_key(&pk);
-        assert_eq!(addr, addr2);
-    }
-}

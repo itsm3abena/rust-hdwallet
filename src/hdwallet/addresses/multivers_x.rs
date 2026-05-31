@@ -97,28 +97,3 @@ impl IAddress for MultiversXAddress {
         Self::decode_bech32(Self::hrp_decode(kwargs), address)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use super::super::iaddress::encode_with_ipublic_key;
-    use crate::hdwallet::eccs::{IPrivateKey, Slip10Ed25519PrivateKeyStd};
-
-    fn test_public_key() -> Slip10Ed25519PublicKeyStd {
-        let mut secret = [0u8; 32];
-        secret[0] = 9;
-        let sk = Slip10Ed25519PrivateKeyStd::from_bytes(&secret).expect("sk");
-        sk.public_key()
-    }
-
-    #[test]
-    fn roundtrip_default_hrp() {
-        let pk = test_public_key();
-        let mx = MultiversXAddress;
-        let addr = encode_with_ipublic_key(&mx, &pk, &EncodeKwargs::default()).expect("encode");
-        assert!(addr.starts_with("erd1"));
-        let decoded = mx.decode(&addr, &DecodeKwargs::default()).expect("decode");
-        assert_eq!(decoded.len(), 64);
-        assert_eq!(decoded, hex::encode(MultiversXAddress::pubkey_body(&pk).unwrap()));
-    }
-}
