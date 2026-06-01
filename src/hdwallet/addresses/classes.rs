@@ -25,6 +25,9 @@ pub use super::p2wpkh_in_p2sh::P2WPKHInP2SHAddress;
 pub use super::p2wsh::P2WSHAddress;
 pub use super::p2wsh_in_p2sh::P2WSHInP2SHAddress;
 pub use super::ripple::RippleAddress;
+pub use super::solana::SolanaAddress;
+pub use super::stellar::StellarAddress;
+pub use super::sui::SuiAddress;
 
 use super::iaddress::IAddress;
 
@@ -46,9 +49,6 @@ macro_rules! address_class {
     };
 }
 
-address_class!(SolanaAddress, "Solana");
-address_class!(StellarAddress, "Stellar");
-address_class!(SuiAddress, "Sui");
 address_class!(TezosAddress, "Tezos");
 address_class!(TronAddress, "Tron");
 address_class!(XinFinAddress, "XinFin");
