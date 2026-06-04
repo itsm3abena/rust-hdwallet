@@ -48,6 +48,7 @@ impl AvalancheAddress {
     fn encode_kwargs<'a>(kwargs: &'a EncodeKwargs<'a>) -> EncodeKwargs<'a> {
         EncodeKwargs {
             hrp: Some(kwargs.hrp.unwrap_or(AvalancheMainnet::HRP)),
+            address_prefix: kwargs.address_prefix,
             address_type: kwargs.address_type,
             public_key_type: kwargs.public_key_type,
             encode_type: kwargs.encode_type,
@@ -68,6 +69,7 @@ impl AvalancheAddress {
     fn decode_kwargs(kwargs: &DecodeKwargs) -> DecodeKwargs {
         DecodeKwargs {
             hrp: Some(kwargs.hrp.unwrap_or(AvalancheMainnet::HRP)),
+            address_prefix: kwargs.address_prefix,
             address_type: kwargs.address_type,
             decode_type: kwargs.decode_type,
             network: kwargs.network,

@@ -27,12 +27,15 @@ mod ripple;
 mod solana;
 mod stellar;
 mod sui;
+mod tezos;
+mod tron;
+mod xinfin;
+mod zilliqa;
 mod classes;
 pub mod iaddress;
 
 pub mod bitcoin;
 pub mod ethereum;
-pub mod utxo_alt;
 
 pub use bitcoin::encode_bitcoin_address;
 pub use avalanche::AvalancheAddress;
@@ -60,24 +63,22 @@ pub use ripple::RippleAddress;
 pub use solana::SolanaAddress;
 pub use stellar::StellarAddress;
 pub use sui::SuiAddress;
+pub use tezos::TezosAddress;
+pub use tron::TronAddress;
+pub use xinfin::XinFinAddress;
+pub use zilliqa::ZilliqaAddress;
 pub use classes::{
     ALGORAND, APTOS, AVALANCHE, BITCOIN_CASH, CARDANO, COSMOS, EOS, ERGO, ETHEREUM, FILECOIN,
     HARMONY, ICON, INJECTIVE, MONERO, MULTIVERS_X, NANO, NEAR, NEO, OKT_CHAIN, P2PKH, P2SH,
     RIPPLE, SOLANA, STELLAR, SUI, TEZOS, TRON,
     XIN_FIN, ZILLIQA, AlgorandAddress, AptosAddress, NanoAddress,
     NearAddress, NeoAddress,
-    TezosAddress, TronAddress, XinFinAddress,
-    ZilliqaAddress,
 };
 pub use ethereum::ethereum_address_from_pubkey;
 pub use iaddress::{
     decode_address, encode_address, encode_with_ipublic_key, AddressDecodeResult,
     AddressPublicKeyInput, AddressSchemeError, DecodeKwargs, EncodeKwargs, EncodePublicKey,
     IAddress,
-};
-pub use utxo_alt::{
-    encode_utxo_coin_address, UtxoAddressParams, DOGECOIN_MAINNET, DOGECOIN_TESTNET,
-    LITECOIN_MAINNET, LITECOIN_TESTNET,
 };
 
 use crate::hdwallet::exceptions::AddressError;

@@ -22,6 +22,7 @@ pub type AddressDecodeResult = AddressEncodeResult;
 #[non_exhaustive]
 pub struct EncodeKwargs<'a> {
     pub hrp: Option<&'static str>,
+    pub address_prefix: Option<&'static str>,
     pub address_type: Option<&'static str>,
     pub public_key_type: Option<&'static str>,
     pub encode_type: Option<&'static str>,
@@ -42,6 +43,7 @@ pub struct EncodeKwargs<'a> {
 #[non_exhaustive]
 pub struct DecodeKwargs {
     pub hrp: Option<&'static str>,
+    pub address_prefix: Option<&'static str>,
     pub address_type: Option<&'static str>,
     pub decode_type: Option<&'static str>,
     pub network: Option<&'static str>,

@@ -28,31 +28,12 @@ pub use super::ripple::RippleAddress;
 pub use super::solana::SolanaAddress;
 pub use super::stellar::StellarAddress;
 pub use super::sui::SuiAddress;
+pub use super::tezos::TezosAddress;
+pub use super::tron::TronAddress;
+pub use super::xinfin::XinFinAddress;
+pub use super::zilliqa::ZilliqaAddress;
 
 use super::iaddress::IAddress;
-
-macro_rules! address_class {
-    ($(#[$meta:meta])* $ty:ident, $name:literal) => {
-        $(#[$meta])*
-        #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
-        pub struct $ty;
-
-        impl $ty {
-            pub const REGISTRY_NAME: &'static str = $name;
-        }
-
-        impl IAddress for $ty {
-            fn name(&self) -> &'static str {
-                $name
-            }
-        }
-    };
-}
-
-address_class!(TezosAddress, "Tezos");
-address_class!(TronAddress, "Tron");
-address_class!(XinFinAddress, "XinFin");
-address_class!(ZilliqaAddress, "Zilliqa");
 
 pub static ALGORAND: AlgorandAddress = AlgorandAddress;
 pub static APTOS: AptosAddress = AptosAddress;

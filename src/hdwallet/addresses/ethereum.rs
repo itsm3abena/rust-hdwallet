@@ -18,7 +18,11 @@ impl EthereumAddress {
     pub const REGISTRY_NAME: &'static str = "Ethereum";
 
     fn address_prefix() -> &'static str {
-        ETHEREUM_PARAMS.address_prefix.unwrap_or("0x")
+        Self::prefix_from_params(ETHEREUM_PARAMS.address_prefix)
+    }
+
+    pub(crate) fn prefix_from_params(prefix: Option<&'static str>) -> &'static str {
+        prefix.unwrap_or("0x")
     }
 
     fn keccak256(data: &[u8]) -> [u8; 32] {
@@ -53,6 +57,18 @@ impl EthereumAddress {
         public_key: PublicKeyInput<'_, Slip10Secp256k1PublicKey>,
         skip_checksum_encode: bool,
     ) -> std::result::Result<String, AddressSchemeError> {
+        Self::encode_public_key_with_prefix(
+            public_key,
+            skip_checksum_encode,
+            Self::address_prefix(),
+        )
+    }
+
+    pub(crate) fn encode_public_key_with_prefix(
+        public_key: PublicKeyInput<'_, Slip10Secp256k1PublicKey>,
+        skip_checksum_encode: bool,
+        prefix: &str,
+    ) -> std::result::Result<String, AddressSchemeError> {
         let pk = validate_and_get_public_key(public_key)
             .map_err(|e: PublicKeyError| AddressSchemeError::Msg(e.to_string()))?;
         let address = Self::pubkey_hash_hex(&pk);
@@ -61,14 +77,21 @@ impl EthereumAddress {
         } else {
             Self::checksum_encode(&address)
         };
-        Ok(format!("{}{body}", Self::address_prefix()))
+        Ok(format!("{prefix}{body}"))
     }
 
     pub fn decode_address(
         address: &str,
         skip_checksum_encode: bool,
     ) -> std::result::Result<String, AddressSchemeError> {
-        let prefix = Self::address_prefix();
+        Self::decode_address_with_prefix(address, skip_checksum_encode, Self::address_prefix())
+    }
+
+    pub(crate) fn decode_address_with_prefix(
+        address: &str,
+        skip_checksum_encode: bool,
+        prefix: &str,
+    ) -> std::result::Result<String, AddressSchemeError> {
         let prefix_got = address.get(..prefix.len()).unwrap_or("");
         if prefix_got != prefix {
             return Err(AddressSchemeError::Msg(format!(
@@ -77,7 +100,7 @@ impl EthereumAddress {
         }
         let address_no_prefix = address
             .get(prefix.len()..)
-            .ok_or_else(|| AddressSchemeError::Msg("Ethereum address too short".into()))?;
+            .ok_or_else(|| AddressSchemeError::Msg("address too short".into()))?;
         if address_no_prefix.len() != 40 {
             return Err(AddressSchemeError::Msg(format!(
                 "Invalid length (expected: 40, got: {})",
