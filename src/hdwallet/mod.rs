@@ -9,6 +9,7 @@ pub mod slip44;
 pub mod cryptocurrencies;
 pub mod addresses;
 pub mod consts;
+pub mod derivations;
 pub mod entropies;
 pub mod mnemonics;
 pub mod seeds;
