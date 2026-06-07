@@ -1,13 +1,18 @@
 [package]
 name = "hdwallet-rust"
 version = "0.1.0"
-edition = "2021"
+edition = "2026"
 description = "Hierarchical deterministic wallet primitives mirroring hdwallet-io/python-hdwallet layout"
 license = "MIT"
+
+[[bin]]
+name = "hdwallet"
+path = "src/bin/hdwallet.rs"
 
 [dependencies]
 bitcoin = { version = "0.32", default-features = false, features = ["std", "rand"] }
 thiserror = "2"
+clap = { version = "4.5", features = ["derive"] }
 unicode-normalization = "0.1"
 hex = "0.4"
 sha3 = "0.10"
