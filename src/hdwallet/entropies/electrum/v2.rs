@@ -25,6 +25,33 @@ impl IEntropy for ElectrumV2Entropy {
         ]
     }
 
+    fn is_valid_bytes_strength(&self, _bytes_len: usize) -> bool {
+        // Electrum-V2 entropy bit length is derived from the integer value, not byte width.
+        true
+    }
+
+    fn is_valid_entropy_hex(&self, entropy: &str) -> bool {
+        let re = regex::Regex::new(r"^[0-9a-fA-F]+$").unwrap();
+        if !re.is_match(entropy) {
+            return false;
+        }
+        let bytes = match hex::decode(entropy) {
+            Ok(value) => value,
+            Err(_) => return false,
+        };
+        let value = BigUint::from_bytes_be(&bytes);
+        Self::are_entropy_bits_enough(&value)
+    }
+
+    fn strength_bits_from_hex(&self, entropy: &str) -> Result<usize, EntropyError> {
+        let bytes = hex::decode(entropy).map_err(|_| EntropyError::new("Invalid entropy data"))?;
+        let value = BigUint::from_bytes_be(&bytes);
+        if !Self::are_entropy_bits_enough(&value) {
+            return Err(EntropyError::new("Entropy bits are not enough"));
+        }
+        Ok(value.bits() as usize)
+    }
+
     fn generate(&self, strength: usize) -> Result<String, EntropyError> {
         if !self.is_valid_strength(strength) {
             return Err(EntropyError::new("Unsupported entropy strength"));

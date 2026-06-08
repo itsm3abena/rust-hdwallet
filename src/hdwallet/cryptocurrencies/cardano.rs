@@ -122,13 +122,13 @@ impl Cardano {
     pub const COIN_TYPE: u32 = coin_types::CARDANO;
     pub const ECC: &'static str = "KholawEd25519ECC";
     pub const SUPPORT_BIP38: bool = false;
-    pub const DEFAULT_HD: &'static str = "CARDANO";
+    pub const DEFAULT_HD: &'static str = "Cardano";
     pub const DEFAULT_PATH: &'static str = "m/44'/1815'/0'/0/0";
     pub const DEFAULT_ADDRESS: &'static str = "CARDANO";
     pub const ENTROPIES: &'static [&'static str] = &["BIP39"];
     pub const MNEMONICS: &'static [&'static str] = &["BIP39"];
     pub const SEEDS: &'static [&'static str] = &["CARDANO"];
-    pub const HDS: &'static [&'static str] = &["CARDANO"];
+    pub const HDS: &'static [&'static str] = &["Cardano"];
     pub const ADDRESSES: &'static [&'static str] = &["CARDANO"];
     pub const SEMANTICS: &'static [&'static str] = &["p2pkh"];
     pub const DEFAULT_SEMANTIC: Option<&'static str> = Some("p2pkh");

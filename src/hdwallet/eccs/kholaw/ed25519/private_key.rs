@@ -48,6 +48,10 @@ impl IPrivateKey for KholawEd25519PrivateKey {
 }
 
 impl KholawEd25519PrivateKey {
+    pub fn from_signing_and_extended(signing: [u8; COORD_BYTE_LEN], chain: [u8; COORD_BYTE_LEN]) -> Self {
+        Self { signing, chain }
+    }
+
     pub fn slip10_signing_key(&self) -> Slip10Ed25519PrivateKeyStd {
         Slip10Ed25519PrivateKey {
             secret: self.signing,

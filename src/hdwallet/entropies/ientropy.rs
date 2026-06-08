@@ -51,6 +51,17 @@ pub trait IEntropy {
         let re = Regex::new(r"^[0-9a-fA-F]+$").unwrap();
         re.is_match(entropy) && self.is_valid_strength(entropy.len() * 4)
     }
+
+    fn strength_bits_from_hex(&self, entropy: &str) -> Result<usize, EntropyError> {
+        let bytes_len = entropy.len() / 2;
+        if !self.is_valid_bytes_strength(bytes_len) {
+            return Err(EntropyError::new("Unsupported entropy strength"));
+        }
+        if !self.is_valid_entropy_hex(entropy) {
+            return Err(EntropyError::new("Invalid entropy data"));
+        }
+        Ok(bytes_len * 8)
+    }
 }
 
 pub struct EntropyInstance {
@@ -73,7 +84,7 @@ impl EntropyInstance {
 
         Ok(Self {
             entropy: entropy.to_string(),
-            strength: bytes_len * 8,
+            strength: scheme.strength_bits_from_hex(entropy)?,
         })
     }
 

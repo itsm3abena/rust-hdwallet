@@ -3,11 +3,17 @@ pub mod bip44;
 pub mod bip49;
 pub mod bip84;
 pub mod bip86;
+pub mod cardano;
+pub mod electrum;
 pub mod ihd;
 pub mod algorand;
+pub mod monero;
 
 pub use algorand::{decode_address, encode_address, AlgorandHd};
 pub use bip32::Bip32Hd;
+pub use cardano::CardanoHd;
+pub use electrum::{ElectrumV1Hd, ElectrumV2Hd};
+pub use monero::MoneroHd;
 pub use ihd::{Ihd, IndexList};
 
 use crate::hdwallet::exceptions::HDError;

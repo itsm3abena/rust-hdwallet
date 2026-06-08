@@ -184,6 +184,45 @@ pub fn hmac_sha512(key: &[u8], data: &[u8]) -> Vec<u8> {
     mac.finalize().into_bytes().to_vec()
 }
 
+pub fn hmac_sha256(key: &[u8], data: &[u8]) -> Vec<u8> {
+    use sha2::Sha256;
+    type HmacSha256 = Hmac<Sha256>;
+    let mut mac = HmacSha256::new_from_slice(key).expect("HMAC key length");
+    mac.update(data);
+    mac.finalize().into_bytes().to_vec()
+}
+
+pub fn sha512(data: &[u8]) -> Vec<u8> {
+    use sha2::{Digest, Sha512};
+    Sha512::digest(data).to_vec()
+}
+
+pub fn are_bits_set(value: u8, mask: u8) -> bool {
+    value & mask != 0
+}
+
+pub fn chacha20_poly1305_encrypt(
+    key: &[u8],
+    nonce: &[u8],
+    associated_data: &[u8],
+    plaintext: &[u8],
+) -> Result<Vec<u8>, String> {
+    use chacha20poly1305::aead::{Aead, KeyInit, Payload};
+    use chacha20poly1305::{ChaCha20Poly1305, Key, Nonce};
+
+    let cipher = ChaCha20Poly1305::new(Key::from_slice(key));
+    let nonce = Nonce::from_slice(nonce);
+    cipher
+        .encrypt(
+            nonce,
+            Payload {
+                msg: plaintext,
+                aad: associated_data,
+            },
+        )
+        .map_err(|error| error.to_string())
+}
+
 pub fn pbkdf2_hmac_sha512(password: &[u8], salt: &[u8], iterations: u32, dklen: usize) -> Vec<u8> {
     let mut out = vec![0u8; dklen];
     let mut offset = 0usize;

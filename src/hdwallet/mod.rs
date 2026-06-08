@@ -1,5 +1,6 @@
 pub mod info;
 pub mod hdwallet;
+pub mod extended_keys;
 pub mod libs;
 pub mod utils;
 pub mod wif;

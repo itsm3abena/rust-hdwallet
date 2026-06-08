@@ -7,18 +7,26 @@ use num_traits::One;
 use sha2::{Digest, Sha256, Sha512};
 
 use crate::hdwallet::exceptions::{Error, Result, SeedError};
+use crate::hdwallet::extended_keys::{
+    algorand_xprivate_version, algorand_xpublic_version, deserialize_extended, is_root_extended_key,
+    serialize_extended,
+};
 use crate::hdwallet::libs::base32;
 use crate::hdwallet::libs::ed25519::{
     point_add, point_scalar_mul_base, scalar_reduce_from_int, PointRef, COORD_BYTE_LEN,
 };
 use crate::hdwallet::libs::ripemd160::ripemd160;
 use crate::hdwallet::seeds::iseed::ISeed;
-use crate::hdwallet::utils::sha512_256;
-
-use super::ihd::Ihd;
+use crate::hdwallet::utils::{path_to_indexes, sha512_256};
+use crate::hdwallet::eccs::{
+    KholawEd25519PrivateKey, KholawEd25519PublicKey, IPrivateKey, IPublicKey,
+};
 
 type HmacSha512 = Hmac<Sha512>;
 
+use super::ihd::Ihd;
+
+const NETWORK: &str = "mainnet";
 const PEIKERT_G: usize = 9;
 
 #[inline]
@@ -279,6 +287,149 @@ impl AlgorandHd {
         self.private_64.as_ref()
     }
 
+    pub fn derive_path(&mut self, path: &str) -> Result<()> {
+        let indexes = path_to_indexes(path).map_err(|error| {
+            Error::new("Invalid derivation path", Some(&error), None, None)
+        })?;
+        self.reset_to_root();
+        for index in indexes {
+            self.drive(index)?;
+        }
+        Ok(())
+    }
+
+    fn reset_to_root(&mut self) {
+        self.private_64 = Some(self.root_private_64);
+        self.chain_code = self.root_chain_code;
+        self.public_key = public_from_extended_secret(&self.root_private_64);
+        self.depth = 0;
+        self.child_index = 0;
+        self.parent_fingerprint = [0u8; 4];
+        self.fingerprint = fingerprint_4(&self.public_key);
+    }
+
+    pub fn from_xpublic_key(&mut self, xpublic_key: &str, encoded: bool, strict: bool) -> Result<()> {
+        let parts = deserialize_extended(xpublic_key, encoded)?;
+        if parts.key.len() != 33 {
+            return Err(Error::new("Invalid extended public key", None, None, None));
+        }
+        if strict && !is_root_extended_key(xpublic_key, encoded)? {
+            return Err(Error::new("Invalid root extended public key", None, None, None));
+        }
+
+        let public = KholawEd25519PublicKey::from_bytes(&parts.key).map_err(|error| {
+            Error::new("Invalid extended public key", Some(&error.to_string()), None, None)
+        })?;
+
+        self.root_private_64 = [0u8; 64];
+        self.root_chain_code = parts.chain_code;
+        self.root_public_key_from_bytes(&public.encoded_point());
+        self.private_64 = None;
+        self.chain_code = parts.chain_code;
+        self.public_key = *public.encoded_point();
+        self.depth = parts.depth as u32;
+        self.child_index = parts.index;
+        self.parent_fingerprint = parts.parent_fingerprint;
+        self.fingerprint = fingerprint_4(&self.public_key);
+        Ok(())
+    }
+
+    pub fn from_xprivate_key(&mut self, xprivate_key: &str, encoded: bool, strict: bool) -> Result<()> {
+        let parts = deserialize_extended(xprivate_key, encoded)?;
+        if parts.key.len() != 65 || parts.key[0] != 0x00 {
+            return Err(Error::new("Invalid extended private key", None, None, None));
+        }
+        if strict && !is_root_extended_key(xprivate_key, encoded)? {
+            return Err(Error::new("Invalid root extended private key", None, None, None));
+        }
+
+        let mut private_64 = [0u8; 64];
+        private_64.copy_from_slice(&parts.key[1..]);
+        self.root_private_64 = private_64;
+        self.root_chain_code = parts.chain_code;
+        self.private_64 = Some(private_64);
+        self.chain_code = parts.chain_code;
+        self.public_key = public_from_extended_secret(&private_64);
+        self.depth = parts.depth as u32;
+        self.child_index = parts.index;
+        self.parent_fingerprint = parts.parent_fingerprint;
+        self.fingerprint = fingerprint_4(&self.public_key);
+        Ok(())
+    }
+
+    pub fn from_private_key_hex(&mut self, private_key: &str) -> Result<()> {
+        let bytes = hex::decode(private_key.trim()).map_err(|error| {
+            Error::new("Invalid private key hex", Some(&error.to_string()), None, None)
+        })?;
+        let private = KholawEd25519PrivateKey::from_bytes(&bytes).map_err(|error| {
+            Error::new("Invalid private key", Some(&error.to_string()), None, None)
+        })?;
+        let raw = private.raw_bytes();
+        let mut private_64 = [0u8; 64];
+        private_64.copy_from_slice(raw.as_ref());
+        self.private_64 = Some(private_64);
+        self.public_key = public_from_extended_secret(&private_64);
+        self.fingerprint = fingerprint_4(&self.public_key);
+        Ok(())
+    }
+
+    fn root_public_key_from_bytes(&mut self, public: &[u8; COORD_BYTE_LEN]) {
+        self.public_key = *public;
+    }
+
+    fn xprivate_key_encoded(&self, version: u32, root: bool, encoded: bool) -> Option<String> {
+        let private = if root {
+            self.root_private_64
+        } else {
+            self.private_64?
+        };
+        let chain_code = if root {
+            self.root_chain_code
+        } else {
+            self.chain_code
+        };
+        let depth = if root { 0 } else { self.depth as u8 };
+        let index = if root { 0 } else { self.child_index };
+        let parent_fingerprint = if root {
+            [0u8; 4]
+        } else {
+            self.parent_fingerprint
+        };
+        let mut key = vec![0x00];
+        key.extend_from_slice(&private);
+        serialize_extended(version, depth, &parent_fingerprint, index, &chain_code, &key, encoded).ok()
+    }
+
+    fn xpublic_key_encoded(&self, version: u32, root: bool, encoded: bool) -> Option<String> {
+        let public_bytes = self.public_key;
+        let chain_code = if root {
+            self.root_chain_code
+        } else {
+            self.chain_code
+        };
+        let depth = if root { 0 } else { self.depth as u8 };
+        let index = if root { 0 } else { self.child_index };
+        let parent_fingerprint = if root {
+            [0u8; 4]
+        } else {
+            self.parent_fingerprint
+        };
+        let public = KholawEd25519PublicKey {
+            enc: public_bytes,
+            _v: std::marker::PhantomData,
+        };
+        serialize_extended(
+            version,
+            depth,
+            &parent_fingerprint,
+            index,
+            &chain_code,
+            &public.raw_compressed(),
+            encoded,
+        )
+        .ok()
+    }
+
     pub fn drive(&mut self, index: u32) -> Result<&mut Self> {
         let index_bytes = index.to_le_bytes();
         let cc = self.chain_code;
@@ -402,8 +553,60 @@ impl Ihd for AlgorandHd {
         Ok(())
     }
 
+    fn from_xprivate_key(&mut self, xprivate_key: &str, encoded: bool, strict: bool) -> Result<()> {
+        self.from_xprivate_key(xprivate_key, encoded, strict)
+    }
+
+    fn from_xpublic_key(&mut self, xpublic_key: &str, encoded: bool, strict: bool) -> Result<()> {
+        self.from_xpublic_key(xpublic_key, encoded, strict)
+    }
+
+    fn from_private_key(&mut self, private_key: &str) -> Result<()> {
+        self.from_private_key_hex(private_key)
+    }
+
+    fn from_derivation(&mut self, derivation: &str) -> Result<()> {
+        self.derive_path(derivation)
+    }
+
+    fn update_derivation(&mut self, derivation: &str) -> Result<()> {
+        self.derive_path(derivation)
+    }
+
     fn seed_hex(&self) -> Option<String> {
         Some(hex::encode(&self.seed))
+    }
+
+    fn root_xprivate_key(&self, encoded: bool) -> Option<String> {
+        self.xprivate_key_encoded(algorand_xprivate_version(NETWORK), true, encoded)
+    }
+
+    fn root_xpublic_key(&self, encoded: bool) -> Option<String> {
+        self.xpublic_key_encoded(algorand_xpublic_version(NETWORK), true, encoded)
+    }
+
+    fn xprivate_key(&self, encoded: bool) -> Option<String> {
+        self.xprivate_key_encoded(algorand_xprivate_version(NETWORK), false, encoded)
+    }
+
+    fn xpublic_key(&self, encoded: bool) -> Option<String> {
+        self.xpublic_key_encoded(algorand_xpublic_version(NETWORK), false, encoded)
+    }
+
+    fn root_private_key(&self) -> Option<String> {
+        Some(hex::encode(self.root_private_64))
+    }
+
+    fn root_public_key(&self) -> Option<String> {
+        Some(hex::encode(public_from_extended_secret(&self.root_private_64)))
+    }
+
+    fn root_chain_code(&self) -> Option<String> {
+        Some(hex::encode(self.root_chain_code))
+    }
+
+    fn private_key(&self) -> Option<String> {
+        self.private_64.map(|key| hex::encode(key))
     }
 
     fn depth(&self) -> Option<u32> {

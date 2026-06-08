@@ -49,7 +49,9 @@ pub use filecoin::FilecoinAddress;
 pub use harmony::HarmonyAddress;
 pub use icon::IconAddress;
 pub use injective::InjectiveAddress;
-pub use monero::MoneroAddress;
+pub use monero::{
+    MoneroAddress, ADDRESS_TYPE_INTEGRATED, ADDRESS_TYPE_STANDARD, ADDRESS_TYPE_SUB_ADDRESS,
+};
 pub use multivers_x::MultiversXAddress;
 pub use okt_chain::OKTChainAddress;
 pub use p2pkh::P2PKHAddress;

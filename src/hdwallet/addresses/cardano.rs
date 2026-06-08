@@ -12,7 +12,7 @@ use crate::hdwallet::exceptions::PublicKeyError;
 use crate::hdwallet::libs::base58;
 use crate::hdwallet::libs::segwit_bech32::{base_bech32_decode, bech32_encode, convertbits};
 use crate::hdwallet::utils::{
-    blake2b_224, crc32_to_u32, integer_to_bytes_python, sha3_256,
+    blake2b_224, crc32_to_u32, integer_to_bytes_python, path_to_indexes, sha3_256,
 };
 
 use super::iaddress::{
@@ -162,15 +162,37 @@ impl CardanoAddress {
     }
 
     pub fn encode_byron_legacy(
-        _public_key: PublicKeyInput<'_, KholawEd25519PublicKey>,
-        _path: &str,
-        _path_key: &[u8],
-        _chain_code: &[u8],
-        _address_type: &str,
+        public_key: PublicKeyInput<'_, KholawEd25519PublicKey>,
+        path: &str,
+        path_key: &[u8],
+        chain_code: &[u8],
+        address_type: &str,
     ) -> Result<String, AddressSchemeError> {
-        Err(AddressSchemeError::Unimplemented {
-            scheme: "Cardano Byron legacy (ChaCha20-Poly1305 path encryption not enabled)",
-        })
+        if path_key.len() != 32 {
+            return Err(AddressSchemeError::Msg(format!(
+                "Invalid HD path key length (expected: 32 | got: {})",
+                path_key.len()
+            )));
+        }
+        let pk = Self::parse_kholaw_pk(public_key)?;
+        let indexes = path_to_indexes(path).map_err(|error| AddressSchemeError::Msg(error))?;
+        let mut plain_text = vec![0x9f];
+        for index in indexes {
+            plain_text.extend(Self::cbor_bytes(&Self::cbor_u64(u64::from(index)))?);
+        }
+        plain_text.push(0xff);
+
+        let ciphertext = crate::hdwallet::utils::chacha20_poly1305_encrypt(
+            path_key,
+            b"serokellfore",
+            b"",
+            &plain_text,
+        )
+        .map_err(|error| AddressSchemeError::Msg(error))?;
+
+        let mut address_attributes = BTreeMap::new();
+        address_attributes.insert(1, Value::Bytes(ciphertext));
+        Self::encode_byron(&pk, chain_code, address_attributes, address_type)
     }
 
     pub fn encode_shelley_payment(

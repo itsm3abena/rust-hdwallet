@@ -236,8 +236,3 @@ pub trait Ihd {
     }
 }
 
-impl Ihd for super::Bip32Hd {
-    fn registry_name(&self) -> &'static str {
-        "BIP32"
-    }
-}
