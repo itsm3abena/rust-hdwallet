@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 use bitcoin::Network;
 use serde_json::{json, Map, Value};
@@ -45,7 +45,6 @@ pub struct HDWallet {
     checksum: bool,
     payment_id: Option<String>,
     staking_public_key: Option<String>,
-    kwargs: HashMap<String, Option<String>>,
 
     entropy: Option<String>,
     strength: Option<usize>,
@@ -123,13 +122,6 @@ impl HDWallet {
             cryptocurrency,
         );
 
-        let mut kwargs = HashMap::new();
-        kwargs.insert(
-            "staking_public_key".to_string(),
-            config.staking_public_key.clone(),
-        );
-        kwargs.insert("payment_id".to_string(), config.payment_id.clone());
-
         Ok(Self {
             cryptocurrency,
             network,
@@ -145,7 +137,6 @@ impl HDWallet {
             checksum: config.checksum,
             payment_id: config.payment_id,
             staking_public_key: config.staking_public_key,
-            kwargs,
             entropy: None,
             strength: None,
             mnemonic: None,
@@ -193,8 +184,13 @@ impl HDWallet {
                 &self.language,
             )
             .map_err(|error| Error::new(&error.to_string(), None, None, None))?,
-            "Monero" => MoneroMnemonic::from_entropy(&entropy_bytes, &self.language)
-                .map_err(|error| Error::new(&error.to_string(), None, None, None))?,
+            "Monero" => MoneroMnemonic::from_entropy_with_checksum(
+                &entropy_bytes,
+                &self.language,
+                self.checksum,
+            )
+            .map(|m| m.mnemonic())
+            .map_err(|error| Error::new(&error.to_string(), None, None, None))?,
             "BIP39" => BIP39Mnemonic::from_entropy(&entropy_bytes, &self.language)
                 .map_err(|error| Error::new(&error.to_string(), None, None, None))?,
             "Electrum-V1" => ElectrumV1Mnemonic::from_entropy(&entropy_bytes, &self.language)
@@ -578,16 +574,28 @@ impl HDWallet {
     }
 
     pub fn dump(&self, exclude: &HashSet<String>) -> Result<Value, Error> {
-        let mut derivation = self.build_derivation_dump()?;
-
-        if exclude.contains("at") {
-            if let Some(object) = derivation.as_object_mut() {
-                object.remove("at");
+        if exclude.contains("root") {
+            let mut derivation = self.build_derivation_dump()?;
+            if exclude.contains("at") {
+                if let Some(object) = derivation.as_object_mut() {
+                    object.remove("at");
+                }
             }
+            return Ok(apply_value_exclude(derivation, exclude));
         }
 
-        if exclude.contains("root") {
-            return Ok(apply_value_exclude(derivation, exclude));
+        let mut derivation = if exclude.contains("derivation") {
+            None
+        } else {
+            Some(self.build_derivation_dump()?)
+        };
+
+        if let Some(derivation) = derivation.as_mut() {
+            if exclude.contains("at") {
+                if let Some(object) = derivation.as_object_mut() {
+                    object.remove("at");
+                }
+            }
         }
 
         let mut root = json!({
@@ -753,7 +761,7 @@ impl HDWallet {
             }
         }
 
-        if !exclude.contains("derivation") {
+        if let Some(derivation) = derivation {
             if let Some(map) = root.as_object_mut() {
                 map.insert("derivation".to_string(), derivation);
             }
@@ -1097,7 +1105,7 @@ impl HDWallet {
                 Ok(HdBackend::Monero(hd))
             }
             "Algorand" => {
-                let mut hd = AlgorandHd::from_seed_bytes(seed_bytes)?;
+                let hd = AlgorandHd::from_seed_bytes(seed_bytes)?;
                 Ok(HdBackend::Algorand(hd))
             }
             other => Err(Error::new(
@@ -1184,56 +1192,54 @@ pub fn build_derivation(
         ));
     }
 
-    let account = parse_index(account)?;
-    let address = parse_index(address)?;
-    let role = parse_index(role)?;
-    let ecc = parse_index(ecc)?;
-    let minor = parse_index(minor)?;
-    let major = parse_index(major)?;
+    let account_input = IndexInput::Str(account);
+    let address_input = IndexInput::Str(address);
+    let minor_input = IndexInput::Str(minor);
+    let major_input = IndexInput::Str(major);
 
     match derivation_name {
         "BIP44" => Ok(Box::new(
             Bip44Derivation::new(
                 Some(IndexInput::Int(cryptocurrency.coin_type)),
-                Some(IndexInput::Int(account)),
+                Some(account_input),
                 Some(ChangeInput::Str(change)),
-                Some(IndexInput::Int(address)),
+                Some(address_input),
             )
             .map_err(map_derivation_error)?,
         )),
         "BIP49" => Ok(Box::new(
             Bip49Derivation::new(
                 Some(IndexInput::Int(cryptocurrency.coin_type)),
-                Some(IndexInput::Int(account)),
+                Some(account_input),
                 Some(ChangeInput::Str(change)),
-                Some(IndexInput::Int(address)),
+                Some(address_input),
             )
             .map_err(map_derivation_error)?,
         )),
         "BIP84" => Ok(Box::new(
             Bip84Derivation::new(
                 Some(IndexInput::Int(cryptocurrency.coin_type)),
-                Some(IndexInput::Int(account)),
+                Some(account_input),
                 Some(ChangeInput::Str(change)),
-                Some(IndexInput::Int(address)),
+                Some(address_input),
             )
             .map_err(map_derivation_error)?,
         )),
         "BIP86" => Ok(Box::new(
             Bip86Derivation::new(
                 Some(IndexInput::Int(cryptocurrency.coin_type)),
-                Some(IndexInput::Int(account)),
+                Some(account_input),
                 Some(ChangeInput::Str(change)),
-                Some(IndexInput::Int(address)),
+                Some(address_input),
             )
             .map_err(map_derivation_error)?,
         )),
         "CIP1852" => Ok(Box::new(
             Cip1852Derivation::new(
                 Some(IndexInput::Int(cryptocurrency.coin_type)),
-                Some(IndexInput::Int(account)),
-                Some(RoleInput::Int(role)),
-                Some(IndexInput::Int(address)),
+                Some(account_input),
+                Some(RoleInput::Str(role)),
+                Some(address_input),
             )
             .map_err(map_derivation_error)?,
         )),
@@ -1251,19 +1257,19 @@ pub fn build_derivation(
         "Electrum" => Ok(Box::new(
             ElectrumDerivation::new(
                 Some(IndexInput::Str(change)),
-                Some(IndexInput::Int(address)),
+                Some(address_input),
             )
             .map_err(map_derivation_error)?,
         )),
         "Monero" => Ok(Box::new(
-            MoneroDerivation::new(Some(IndexInput::Int(minor)), Some(IndexInput::Int(major)))
+            MoneroDerivation::new(Some(minor_input), Some(major_input))
                 .map_err(map_derivation_error)?,
         )),
         "HDW" => Ok(Box::new(
             HdwDerivation::new(
-                Some(IndexInput::Int(account)),
-                Some(EccInput::Int(ecc)),
-                Some(IndexInput::Int(address)),
+                Some(account_input),
+                Some(EccInput::Str(ecc)),
+                Some(address_input),
             )
             .map_err(map_derivation_error)?,
         )),
@@ -1444,12 +1450,6 @@ fn map_bitcoin_network(name: &str) -> Network {
         "regtest" => Network::Regtest,
         _ => Network::Bitcoin,
     }
-}
-
-fn parse_index(value: &str) -> Result<u32, Error> {
-    value
-        .parse()
-        .map_err(|_| Error::new("Invalid index value", None, None, Some(value)))
 }
 
 fn map_derivation_error(error: crate::hdwallet::exceptions::DerivationError) -> Error {

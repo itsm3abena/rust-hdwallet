@@ -6,7 +6,7 @@ use crate::hdwallet::cryptocurrencies::cardano::{
     CARDANO_PARAMS, Mainnet as CardanoMainnet, Testnet as CardanoTestnet,
 };
 use crate::hdwallet::eccs::{
-    validate_and_get_public_key, IPublicKey, KholawEd25519PublicKey, PublicKeyInput,
+    validate_and_get_public_key, KholawEd25519PublicKey, PublicKeyInput,
 };
 use crate::hdwallet::exceptions::PublicKeyError;
 use crate::hdwallet::libs::base58;

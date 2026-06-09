@@ -1,9 +1,5 @@
 use std::collections::HashMap;
 
-fn bytes_to_integer(bytes: &[u8]) -> u64 {
-    bytes.iter().fold(0u64, |acc, &b| (acc << 8) | b as u64)
-}
-
 #[derive(Debug, Clone)]
 pub struct NestedNamespace {
     pub data: HashMap<String, NestedValue>,

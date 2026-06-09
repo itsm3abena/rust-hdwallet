@@ -187,9 +187,13 @@ fn words_for(client: &str) -> Vec<usize> {
 }
 
 fn parse_max_attempts(value: &str) -> Result<u128, MnemonicError> {
-    value
-        .parse()
-        .map_err(|_| MnemonicError::simple("Invalid max-attempts value"))
+    if let Ok(parsed) = value.parse::<u128>() {
+        return Ok(parsed);
+    }
+    if !value.is_empty() && value.chars().all(|ch| ch.is_ascii_digit()) {
+        return Ok(u128::MAX);
+    }
+    Err(MnemonicError::simple("Invalid max-attempts value"))
 }
 
 fn generate_from_entropy(

@@ -108,15 +108,14 @@ impl CardanoHd {
             Error::new("HMAC key is not configured for Cardano", None, None, None)
         })?;
         let mut hmac_data = seed.to_vec();
-        let mut hmac = Vec::new();
-        loop {
-            hmac = hmac_sha512(hmac_key, &hmac_data);
+        let hmac = loop {
+            let hmac = hmac_sha512(hmac_key, &hmac_data);
             if !are_bits_set(hmac[HMAC_HALF - 1], 0x20) {
-                break;
+                break hmac;
             }
             hmac_data = hmac.clone();
-        }
-        let mut kl = tweak_ledger_master_key(&hmac[..HMAC_HALF]);
+        };
+        let kl = tweak_ledger_master_key(&hmac[..HMAC_HALF]);
         let kr = hmac[HMAC_HALF..].to_vec();
         let mut private_bytes = kl;
         private_bytes.extend_from_slice(&kr);

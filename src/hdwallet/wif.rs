@@ -1,6 +1,5 @@
 use base58::{ToBase58, FromBase58};
 use sha2::{Sha256, Digest};
-use std::convert::TryInto;
 use thiserror::Error;
 
 pub const SLIP10_SECP256K1_PRIVATE_KEY_COMPRESSED_PREFIX: u8 = 0x01;

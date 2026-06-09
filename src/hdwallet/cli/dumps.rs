@@ -312,33 +312,104 @@ fn rebuild_derivation(
         );
     }
 
-    let path = format!(
-        "m/{}",
-        current
-            .iter()
-            .map(|(index, hardened)| {
-                if *hardened {
-                    format!("{index}'")
-                } else {
-                    index.to_string()
-                }
-            })
-            .collect::<Vec<_>>()
-            .join("/")
-    );
-    build_derivation(
-        "Custom",
-        cryptocurrency,
-        "0",
-        "0",
-        "0",
-        "0",
-        "0",
-        "0",
-        "0",
-        Some(&path),
-        &[],
-    )
+    let index = |position: usize| current.get(position).map(|(value, _)| value.to_string());
+
+    match derivation_name {
+        "BIP44" | "BIP49" | "BIP84" | "BIP86" if current.len() >= 5 => build_derivation(
+            derivation_name,
+            cryptocurrency,
+            &index(2).unwrap_or_else(|| "0".to_string()),
+            &index(3).unwrap_or_else(|| "0".to_string()),
+            &index(4).unwrap_or_else(|| "0".to_string()),
+            "0",
+            "0",
+            "0",
+            "0",
+            None,
+            &[],
+        ),
+        "CIP1852" if current.len() >= 5 => build_derivation(
+            derivation_name,
+            cryptocurrency,
+            &index(2).unwrap_or_else(|| "0".to_string()),
+            "0",
+            &index(4).unwrap_or_else(|| "0".to_string()),
+            &index(3).unwrap_or_else(|| "0".to_string()),
+            "0",
+            "0",
+            "0",
+            None,
+            &[],
+        ),
+        "Electrum" if current.len() >= 2 => build_derivation(
+            derivation_name,
+            cryptocurrency,
+            "0",
+            &index(0).unwrap_or_else(|| "0".to_string()),
+            &index(1).unwrap_or_else(|| "0".to_string()),
+            "0",
+            "0",
+            "0",
+            "0",
+            None,
+            &[],
+        ),
+        "Monero" if current.len() >= 2 => build_derivation(
+            derivation_name,
+            cryptocurrency,
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            &index(0).unwrap_or_else(|| "0".to_string()),
+            &index(1).unwrap_or_else(|| "0".to_string()),
+            None,
+            &[],
+        ),
+        "HDW" if current.len() >= 3 => build_derivation(
+            derivation_name,
+            cryptocurrency,
+            &index(0).unwrap_or_else(|| "0".to_string()),
+            "0",
+            &index(2).unwrap_or_else(|| "0".to_string()),
+            "0",
+            &index(1).unwrap_or_else(|| "0".to_string()),
+            "0",
+            "0",
+            None,
+            &[],
+        ),
+        _ => {
+            let path = format!(
+                "m/{}",
+                current
+                    .iter()
+                    .map(|(index, hardened)| {
+                        if *hardened {
+                            format!("{index}'")
+                        } else {
+                            index.to_string()
+                        }
+                    })
+                    .collect::<Vec<_>>()
+                    .join("/")
+            );
+            build_derivation(
+                "Custom",
+                cryptocurrency,
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                Some(&path),
+                &[],
+            )
+        }
+    }
 }
 
 fn value_to_csv_cell(value: &Value) -> String {
