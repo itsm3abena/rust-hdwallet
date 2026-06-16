@@ -60,6 +60,18 @@ pub const ECC_NAMES: &[&str] = &[
     slip10::secp256k1::Slip10Secp256k1Ecc::NAME,
 ];
 
+pub fn display_ecc_registry_name(registry_key: &str) -> &str {
+    match registry_key {
+        "SLIP10Secp256k1ECC" => Slip10Secp256k1Ecc::NAME,
+        "SLIP10Ed25519ECC" => Slip10Ed25519Ecc::NAME,
+        "KholawEd25519ECC" => KholawEd25519Ecc::NAME,
+        "SLIP10Ed25519Blake2bECC" => Slip10Ed25519Blake2bEcc::NAME,
+        "SLIP10Ed25519MoneroECC" => Slip10Ed25519MoneroEcc::NAME,
+        "SLIP10Nist256p1ECC" => Slip10Nist256p1Ecc::NAME,
+        other => other,
+    }
+}
+
 pub fn is_ecc(name: &str) -> bool {
     ECC_NAMES.iter().any(|&n| n == name)
 }

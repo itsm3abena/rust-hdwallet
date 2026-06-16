@@ -120,7 +120,7 @@ impl ElectrumV1Mnemonic {
             .collect();
 
         if !Self::words_list().contains(&words.len()) {
-            return Err(MnemonicError::simple("Invalid Electrum V1 word count"));
+            return Err(MnemonicError::simple("Invalid mnemonic words"));
         }
 
         let (words_list, index_map) = match (words_list_opt, words_index_opt) {
@@ -177,7 +177,7 @@ impl IMnemonic for ElectrumV1Mnemonic {
 
     fn from_words(words: usize, language: &str) -> Result<String, MnemonicError> {
         if words != ElectrumV1MnemonicWordCounts::TWELVE {
-            return Err(MnemonicError::simple("Electrum V1 only supports 12 words"));
+            return Err(MnemonicError::simple("Invalid mnemonic words number"));
         }
         Self::generate_random(language).map(|m| m.mnemonic())
     }

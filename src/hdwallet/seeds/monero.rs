@@ -2,7 +2,7 @@ use regex::Regex;
 
 use crate::hdwallet::exceptions::{MnemonicError, SeedError};
 use crate::hdwallet::mnemonics::imnemonic::IMnemonic;
-use crate::hdwallet::mnemonics::monero::{MoneroMnemonic, MoneroMnemonicWordCounts};
+use crate::hdwallet::mnemonics::monero::{MoneroMnemonic, MoneroMnemonicWordCounts, mnemonic::normalize_word};
 use crate::hdwallet::seeds::iseed::ISeed;
 use crate::hdwallet::utils::crc32_ieee;
 
@@ -26,10 +26,7 @@ fn verify_checksum_words(words: &[String]) -> Result<(), MnemonicError> {
     let data_words = &words[..words.len() - 1];
     let prefixes: String = data_words
         .iter()
-        .map(|w| {
-            let end = prefix_len.min(w.len());
-            &w[..end]
-        })
+        .map(|w| w.chars().take(prefix_len).collect::<String>())
         .collect();
 
     let crc = crc32_ieee(prefixes.as_bytes()) as usize;
@@ -74,7 +71,7 @@ impl MoneroSeed {
     pub fn from_mnemonic_phrase(phrase: &str) -> Result<String, SeedError> {
         let words: Vec<String> = phrase
             .split_whitespace()
-            .map(|w| w.to_lowercase())
+            .map(normalize_word)
             .collect();
 
         if !MoneroMnemonic::words_list().contains(&words.len()) {

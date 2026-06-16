@@ -1,5 +1,6 @@
 use num_bigint::BigUint;
 use num_traits::{One, Zero};
+use sha2::Digest;
 
 use crate::hdwallet::addresses::CardanoAddress;
 use crate::hdwallet::addresses::iaddress::{EncodeKwargs, EncodePublicKey, IAddress};
@@ -13,7 +14,7 @@ use crate::hdwallet::extended_keys::{
 };
 use crate::hdwallet::hds::ihd::Ihd;
 use crate::hdwallet::libs::ed25519::{point_add, point_scalar_mul_base, PointRef, COORD_BYTE_LEN};
-use crate::hdwallet::seeds::CardanoTypes;
+use crate::hdwallet::seeds::{CardanoSeed, CardanoTypes};
 use crate::hdwallet::utils::{
     add_no_carry, are_bits_set, get_hmac, hmac_sha256, hmac_sha512, multiply_scalar_no_carry,
     path_to_indexes, pbkdf2_hmac_sha512, sha512,
@@ -136,8 +137,8 @@ impl CardanoHd {
         if seed.len() != 32 {
             return Err(Error::new("Invalid seed length", None, Some("32"), None));
         }
-        let data = serde_cbor::to_vec(&seed.to_vec()).map_err(|_| {
-            Error::new("CBOR encoding failed", None, None, None)
+        let data = CardanoSeed::cbor_encode_bytes(seed).map_err(|error| {
+            Error::new("CBOR encoding failed", Some(&error.to_string()), None, None)
         })?;
         let mut iteration = 1u32;
         let (il, ir) = loop {
@@ -186,6 +187,8 @@ impl CardanoHd {
         self.private_key = Some(private.clone());
         self.public_key = Some(private.public_key());
         self.strict = false;
+        self.parent_fingerprint = [0u8; 4];
+        self.update_fingerprint();
         Ok(())
     }
 
@@ -213,6 +216,8 @@ impl CardanoHd {
         self.public_key = Some(public);
         self.private_key = None;
         self.strict = false;
+        self.parent_fingerprint = [0u8; 4];
+        self.update_fingerprint();
         Ok(())
     }
 
@@ -281,9 +286,13 @@ impl CardanoHd {
         self.path = Some("m".to_string());
     }
 
+    fn is_leaf_import(&self) -> bool {
+        self.root_chain_code.is_none()
+    }
+
     fn update_fingerprint(&mut self) {
         if let Some(public_key) = self.public_key.as_ref() {
-            let hex_key = hex::encode(public_key.encoded_point());
+            let hex_key = hex_public_key(public_key);
             if let Ok(fp) = fingerprint_from_public_key_hex(&hex_key) {
                 self.fingerprint = fp;
             }
@@ -330,17 +339,6 @@ impl CardanoHd {
     }
 
     pub fn from_xprivate_key(&mut self, xprivate_key: &str, encoded: bool, strict: bool) -> HdResult<()> {
-        if self.cardano_type.as_str() == CardanoTypes::BYRON_LEGACY {
-            return Err(Error::new(
-                &format!(
-                    "Conversion from xprivate key is not implemented for Cardano {} type",
-                    self.cardano_type
-                ),
-                None,
-                None,
-                None,
-            ));
-        }
         let parts = deserialize_extended(xprivate_key, encoded)?;
         if parts.key.len() != 65 || parts.key[0] != 0x00 {
             return Err(Error::new("Invalid extended private key", None, None, None));
@@ -558,9 +556,6 @@ impl CardanoHd {
             .public_key
             .as_ref()
             .ok_or_else(|| Error::new("Public key is not available", None, None, None))?;
-        let chain_code = self
-            .chain_code
-            .ok_or_else(|| Error::new("Chain code is not available", None, None, None))?;
 
         let encode_type = match self.cardano_type.as_str() {
             CardanoTypes::BYRON_LEGACY => CardanoAddress::ENCODE_BYRON_LEGACY,
@@ -572,6 +567,16 @@ impl CardanoHd {
             }
             CardanoTypes::BYRON_ICARUS | CardanoTypes::BYRON_LEDGER => CardanoAddress::ENCODE_BYRON_ICARUS,
             _ => CardanoAddress::ENCODE_BYRON_ICARUS,
+        };
+
+        let chain_code = match encode_type {
+            CardanoAddress::ENCODE_BYRON_LEGACY | CardanoAddress::ENCODE_BYRON_ICARUS => {
+                Some(
+                    self.chain_code
+                        .ok_or_else(|| Error::new("Chain code is not available", None, None, None))?,
+                )
+            }
+            _ => self.chain_code,
         };
 
         let path_key_bytes = self
@@ -594,7 +599,7 @@ impl CardanoHd {
             encode_type: Some(encode_type),
             address_type: cardano_address_type_label(self.address_type.as_deref()),
             staking_public_key: staking_public_key.as_deref(),
-            chain_code: Some(&chain_code),
+            chain_code: chain_code.as_ref().map(|code| code.as_slice()),
             path: self.path.as_deref(),
             path_key: path_key_ref,
             ..Default::default()
@@ -602,7 +607,7 @@ impl CardanoHd {
 
         CardanoAddress
             .encode(
-                EncodePublicKey::Bytes(public_key.encoded_point()),
+                EncodePublicKey::Bytes(public_key.raw_compressed().as_slice()),
                 &kwargs,
             )
             .map_err(|error: crate::hdwallet::addresses::iaddress::AddressSchemeError| {
@@ -653,6 +658,9 @@ impl Ihd for CardanoHd {
     }
 
     fn strict(&self) -> Option<bool> {
+        if self.is_leaf_import() {
+            return None;
+        }
         Some(self.strict)
     }
 
@@ -679,9 +687,7 @@ impl Ihd for CardanoHd {
     }
 
     fn root_public_key(&self) -> Option<String> {
-        self.root_public
-            .as_ref()
-            .map(|key| hex::encode(key.encoded_point()))
+        self.root_public.as_ref().map(hex_public_key)
     }
 
     fn root_chain_code(&self) -> Option<String> {
@@ -697,9 +703,13 @@ impl Ihd for CardanoHd {
     }
 
     fn public_key(&self) -> Option<String> {
+        self.public_key.as_ref().map(hex_public_key)
+    }
+
+    fn hash(&self) -> Option<String> {
         self.public_key
             .as_ref()
-            .map(|key| hex::encode(key.encoded_point()))
+            .map(|key| hex::encode(hash160(key.raw_compressed().as_slice())))
     }
 
     fn chain_code(&self) -> Option<String> {
@@ -717,6 +727,9 @@ impl Ihd for CardanoHd {
     }
 
     fn parent_fingerprint(&self) -> Option<String> {
+        if self.is_leaf_import() {
+            return None;
+        }
         Some(hex::encode(self.parent_fingerprint))
     }
 
@@ -828,12 +841,11 @@ fn derive_child_private_legacy(
     let parent_raw = parent.raw_bytes();
     let kl = &parent_raw[..HMAC_HALF];
     let kr = &parent_raw[HMAC_HALF..];
-    let left = add_no_carry(
-        &multiply_scalar_no_carry(zl, 8),
-        kl,
-    );
+    let zl_int = le_bytes_to_uint256(&multiply_scalar_no_carry(zl, 8));
+    let kl_int = le_bytes_to_uint256(kl);
+    let left = uint256_to_le_32(&((zl_int + kl_int) % KholawEd25519Ecc::order()));
     let right = add_no_carry(zr, kr);
-    KholawEd25519PrivateKey::from_bytes(&[left, right].concat()).map_err(|error| {
+    KholawEd25519PrivateKey::from_bytes(&[left.to_vec(), right].concat()).map_err(|error| {
         Error::new("Invalid derived private key", Some(&error.to_string()), None, None)
     })
 }
@@ -866,6 +878,15 @@ fn derive_child_public_legacy(
     })
 }
 
+fn hex_public_key(public_key: &KholawEd25519PublicKey) -> String {
+    hex::encode(public_key.raw_compressed())
+}
+
+fn hash160(data: &[u8]) -> Vec<u8> {
+    let digest = sha2::Sha256::digest(data);
+    crate::hdwallet::libs::ripemd160::ripemd160(&digest).to_vec()
+}
+
 fn cardano_address_type_label(address_type: Option<&str>) -> Option<&'static str> {
     match address_type {
         Some("payment") => Some("payment"),
@@ -894,4 +915,63 @@ fn staking_path_from_payment(path: &str) -> Option<String> {
         .collect();
     parts[3] = "2".to_string();
     Some(format!("m/{}", parts.join("/")))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn byron_legacy_seed_fixture() {
+        let seed = hex::decode(
+            "cce7ebb0de741cb8829075d35bb2e7cacf21d994e50a1e68635498b4007e03af",
+        )
+        .unwrap();
+        let mut hd = CardanoHd::new("byron-legacy", "mainnet").unwrap();
+        hd.set_address_type(Some("public-key".to_string()));
+        hd.from_seed_bytes(&seed, None).unwrap();
+        assert_eq!(
+            hd.root_private_key().as_deref(),
+            Some("1850d3bdca31799bb2b43814227f921c04eb92c0ed39d9f0c31067bb4014904e141bd05618158045ecbe7fbd25e2954c60fa86c366b28e859ffc875f31b599a2")
+        );
+        assert_eq!(
+            hd.root_chain_code().as_deref(),
+            Some("6076a1706cdc45faed7fd7626b6ad4dbcdd1f5a19d1872c3b9de0884ddb99724")
+        );
+        assert_eq!(
+            hd.root_public_key().as_deref(),
+            Some("003ac7e2918f8565adf9c16b25bb147a260e35bd1f7f4bc10839dbcf5ee5d53906")
+        );
+        assert_eq!(
+            hd.path_key().as_deref(),
+            Some("aaf5ba7df4510e29d1128b4dd75c67fd9c93118b0944a6f04c93149bbae7c676")
+        );
+        hd.derive_path("m/1852'/1815'/0'/0/0").unwrap();
+        assert_eq!(
+            hd.public_key().as_deref(),
+            Some("00dec61c3987a6826a1b5b50c077c4747cec92a376450934aff0e3d2d22f1ad051")
+        );
+        assert_eq!(
+            hd.chain_code().as_deref(),
+            Some("f9c5be63fb16428b341e7335e55637bdea3e216ad671f354cf5709017f8a8817")
+        );
+        assert_eq!(
+            hd.encode_address().unwrap(),
+            "37btjrVyb4KFsdvxLakJZbS1HPVZwfrAGD8e1ZWYKvhkp6DXAvzDiA9inYcaGkpbuaErq2fMjwTyUwU8KLhVxrCHaVyBXU5ZABMTCo4wiZfZUVfoGj"
+        );
+    }
+
+    #[test]
+    fn byron_icarus_payment_address() {
+        let seed = hex::decode("46cee0c87543fb17ac72fc1a4f545dac0f533fe67c7a48c51c46c401").unwrap();
+        let mut hd = CardanoHd::new("byron-icarus", "mainnet").unwrap();
+        hd.set_address_type(Some("public-key".to_string()));
+        hd.from_seed_bytes(&seed, None).unwrap();
+        hd.derive_path("m/1852'/1815'/0'/0/0").unwrap();
+        let addr = hd.encode_address().unwrap();
+        assert_eq!(
+            addr,
+            "Ae2tdPwUPEZHRJzGNXCFGU8N4KJj91cGVfmobV26Jmm3GcrVfnyMAtkTCGs"
+        );
+    }
 }

@@ -10,7 +10,7 @@ use crate::hdwallet::eccs::{
 };
 use crate::hdwallet::exceptions::PublicKeyError;
 use crate::hdwallet::libs::base58;
-use crate::hdwallet::libs::segwit_bech32::{base_bech32_decode, bech32_encode, convertbits};
+use crate::hdwallet::libs::bech32::bech32_encode_raw;
 use crate::hdwallet::utils::{
     blake2b_224, crc32_to_u32, integer_to_bytes_python, path_to_indexes, sha3_256,
 };
@@ -109,6 +109,69 @@ impl CardanoAddress {
         }
     }
 
+    fn cbor_encode_definite_bytes(data: &[u8]) -> Vec<u8> {
+        let mut out = Vec::with_capacity(2 + data.len());
+        match data.len() {
+            n if n <= 23 => out.push(0x40 + n as u8),
+            n if n <= 255 => {
+                out.push(0x58);
+                out.push(n as u8);
+            }
+            n if n <= 65535 => {
+                out.push(0x59);
+                out.extend_from_slice(&(n as u16).to_be_bytes());
+            }
+            n => {
+                out.push(0x5a);
+                out.extend_from_slice(&(n as u32).to_be_bytes());
+            }
+        }
+        out.extend_from_slice(data);
+        out
+    }
+
+    fn cbor_encode_tagged_bytes(tag: u64, data: &[u8]) -> Vec<u8> {
+        let mut out = Vec::new();
+        if tag <= 255 {
+            out.push(0xd8);
+            out.push(tag as u8);
+        } else if tag <= 65535 {
+            out.push(0xd9);
+            out.extend_from_slice(&(tag as u16).to_be_bytes());
+        } else {
+            out.push(0xda);
+            out.extend_from_slice(&(tag as u32).to_be_bytes());
+        }
+        out.extend_from_slice(&Self::cbor_encode_definite_bytes(data));
+        out
+    }
+
+    fn cbor_encode_u32(value: u32) -> Vec<u8> {
+        if value <= 23 {
+            vec![value as u8]
+        } else if value <= 255 {
+            vec![0x18, value as u8]
+        } else {
+            vec![
+                0x1a,
+                ((value >> 24) & 0xff) as u8,
+                ((value >> 16) & 0xff) as u8,
+                ((value >> 8) & 0xff) as u8,
+                (value & 0xff) as u8,
+            ]
+        }
+    }
+
+    fn cbor_encode_byron_outer(address_payload: &[u8]) -> Vec<u8> {
+        let tagged = Self::cbor_encode_tagged_bytes(PAYLOAD_TAG, address_payload);
+        let crc = Self::cbor_encode_u32(crc32_to_u32(address_payload));
+        let mut outer = Vec::with_capacity(1 + tagged.len() + crc.len());
+        outer.push(0x82);
+        outer.extend_from_slice(&tagged);
+        outer.extend_from_slice(&crc);
+        outer
+    }
+
     fn encode_byron(
         public_key: &KholawEd25519PublicKey,
         chain_code: &[u8],
@@ -144,10 +207,7 @@ impl CardanoAddress {
             Self::cbor_u64(type_code),
         ]))?;
 
-        let outer = Self::cbor_bytes(&Value::Array(vec![
-            Value::Tag(PAYLOAD_TAG, Box::new(Value::Bytes(address_payload.clone()))),
-            Self::cbor_u64(u64::from(crc32_to_u32(&address_payload))),
-        ]))?;
+        let outer = Self::cbor_encode_byron_outer(&address_payload);
 
         Ok(base58::encode(&outer, None))
     }
@@ -190,8 +250,10 @@ impl CardanoAddress {
         )
         .map_err(|error| AddressSchemeError::Msg(error))?;
 
+        let wrapped_ciphertext = Self::cbor_bytes(&Value::Bytes(ciphertext))
+            .map_err(|error| AddressSchemeError::Msg(error.to_string()))?;
         let mut address_attributes = BTreeMap::new();
-        address_attributes.insert(1, Value::Bytes(ciphertext));
+        address_attributes.insert(1, Value::Bytes(wrapped_ciphertext));
         Self::encode_byron(&pk, chain_code, address_attributes, address_type)
     }
 
@@ -219,12 +281,13 @@ impl CardanoAddress {
     }
 
     fn bech32_encode_payload(hrp: &str, payload: &[u8]) -> Result<String, AddressSchemeError> {
-        bech32_encode(hrp, payload).ok_or_else(|| {
+        bech32_encode_raw(hrp, payload).ok_or_else(|| {
             AddressSchemeError::Msg(format!("failed to bech32-encode Cardano address for hrp {hrp}"))
         })
     }
 
     fn bech32_decode_payload(hrp: &str, address: &str) -> Result<Vec<u8>, AddressSchemeError> {
+        use crate::hdwallet::libs::bech32::{base_bech32_decode, convert_bits};
         let (hrp_got, data) = base_bech32_decode(address).ok_or_else(|| {
             AddressSchemeError::Msg(format!("invalid bech32 address for hrp {hrp}"))
         })?;
@@ -233,7 +296,7 @@ impl CardanoAddress {
                 "invalid bech32 hrp (expected: {hrp}, got: {hrp_got})"
             )));
         }
-        convertbits(&data, 5, 8, false).ok_or_else(|| {
+        convert_bits(&data, 5, 8, false).ok_or_else(|| {
             AddressSchemeError::Msg("invalid bech32 payload".into())
         })
     }
@@ -455,5 +518,69 @@ impl IAddress for CardanoAddress {
                 "Invalid decode type (expected: byron-icarus, byron-legacy, payment, staking, reward | got: {other})"
             ))),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn encode_byron_icarus_fixture() {
+        let chain_code =
+            hex::decode("d537f39c41f0f781f543c4c512cac38927e5ebd3cd82b870dd7ce94de9e510b4").unwrap();
+        let kwargs = EncodeKwargs {
+            encode_type: Some(CardanoAddress::ENCODE_BYRON_ICARUS),
+            address_type: Some(CardanoAddress::ADDRESS_PUBLIC_KEY),
+            chain_code: Some(&chain_code),
+            ..Default::default()
+        };
+        let encoded = CardanoAddress
+            .encode(
+                EncodePublicKey::Str(
+                    "00e55487c92c1913439f336b1b2dc316da6e88c02a157208f98781494b87f27eb8",
+                ),
+                &kwargs,
+            )
+            .unwrap();
+        assert_eq!(
+            encoded,
+            "Ae2tdPwUPEZJy1etGnbAt9L92eC2goQEVzsQKpeg9vGYyy6wRSHRNLnTXhL"
+        );
+    }
+
+    #[test]
+    fn bech32_stake_payload_matches_python() {
+        let payload = hex::decode("e1fe46f63557f094843786e38e6e8a349efa300feb3e2b49825b9ae20c").unwrap();
+        let encoded = crate::hdwallet::libs::bech32::bech32_encode_raw("stake", &payload).unwrap();
+        assert_eq!(
+            encoded,
+            "stake1u8lyda342lcffpphsm3cum52xj005vq0avlzkjvztwdwyrq2zwry8"
+        );
+    }
+
+    #[test]
+    fn blake2_stake_body_matches_python() {
+        let body = hex::decode("f9af4262576bb2e1d22e1d29aa83971e6640e149e9af4b2f0c0e828703f979a9").unwrap();
+        assert_eq!(
+            hex::encode(blake2b_224(&body)),
+            "fe46f63557f094843786e38e6e8a349efa300feb3e2b49825b9ae20c"
+        );
+    }
+
+    #[test]
+    fn encode_shelley_staking_fixture() {
+        use crate::hdwallet::eccs::PublicKeyInput;
+        let encoded = CardanoAddress::encode_shelley_staking(
+            PublicKeyInput::Hex(
+                "00f9af4262576bb2e1d22e1d29aa83971e6640e149e9af4b2f0c0e828703f979a9",
+            ),
+            "mainnet",
+        )
+        .unwrap();
+        assert_eq!(
+            encoded,
+            "stake1u8lyda342lcffpphsm3cum52xj005vq0avlzkjvztwdwyrq2zwry8"
+        );
     }
 }

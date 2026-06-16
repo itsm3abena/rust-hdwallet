@@ -249,6 +249,25 @@ pub fn point_scalar_mul_base(scalar: &[u8; COORD_BYTE_LEN]) -> [u8; COORD_BYTE_L
     EdwardsPoint::mul_base(&s).compress().to_bytes()
 }
 
+pub fn clamp_ed25519_scalar(mut scalar: [u8; COORD_BYTE_LEN]) -> [u8; COORD_BYTE_LEN] {
+    scalar[0] &= 248;
+    scalar[31] &= 127;
+    scalar[31] |= 64;
+    scalar
+}
+
+pub fn public_key_from_seed(seed: &[u8; COORD_BYTE_LEN]) -> [u8; COORD_BYTE_LEN] {
+    let digest = crate::hdwallet::utils::sha512(seed);
+    public_key_from_hash_digest(&digest)
+}
+
+pub fn public_key_from_hash_digest(digest: &[u8]) -> [u8; COORD_BYTE_LEN] {
+    let prefix: [u8; COORD_BYTE_LEN] = digest[..COORD_BYTE_LEN]
+        .try_into()
+        .expect("hash digest length");
+    point_scalar_mul_base(&clamp_ed25519_scalar(prefix))
+}
+
 pub fn scalar_reduce(scalar: &[u8]) -> [u8; COORD_BYTE_LEN] {
     let mut wide = [0u8; COORD_BYTE_LEN * 2];
     let n = scalar.len().min(COORD_BYTE_LEN * 2);

@@ -5,13 +5,14 @@ use serde_json::Value;
 
 use crate::hdwallet::cryptocurrencies::icryptocurrency::CryptocurrencyDescriptor;
 use crate::hdwallet::cryptocurrencies::get_cryptocurrency;
-use crate::hdwallet::derivations::{DerivationStep, IDerivation};
+use crate::hdwallet::derivations::DerivationStep;
 use crate::hdwallet::exceptions::Error;
 use crate::hdwallet::hdwallet::{
     build_derivation, default_include_for_hd, flatten_dump_row, HDWallet, HDWalletConfig,
 };
+use crate::hdwallet::wallet_dumps::{dumps_json_output, rebuild_derivation};
 
-use super::dump::{load_master_key, parse_exclude, DumpArgs};
+use super::dump::{load_master_key, parse_exclude, should_apply_derivation, DumpArgs};
 
 #[derive(Args, Clone, Debug)]
 pub struct DumpsArgs {
@@ -72,12 +73,17 @@ fn dumps_csv(args: &DumpsArgs) -> Result<String, Error> {
         lines.push(fields.join(&args.delimiter));
     }
 
+    let template_path = derivation.path().to_string();
+    let template_indexes = derivation.indexes().to_vec();
+    let steps = derivation.derivations().to_vec();
+
     drive_derivations(
         &mut wallet,
         &args.dump.derivation,
         cryptocurrency,
-        derivation.as_ref(),
-        derivation.derivations(),
+        &template_path,
+        &template_indexes,
+        &steps,
         Vec::new(),
         &include,
         &args.delimiter,
@@ -88,22 +94,13 @@ fn dumps_csv(args: &DumpsArgs) -> Result<String, Error> {
 }
 
 fn dumps_json(args: &DumpsArgs) -> Result<String, Error> {
+    if !should_apply_derivation(&args.dump) {
+        return Ok(String::new());
+    }
+
     let cryptocurrency = get_cryptocurrency(&args.dump.symbol)?;
     let mut wallet = build_wallet(&args.dump)?;
     let exclude = parse_exclude(&args.dump.exclude);
-    let mut blocks = Vec::new();
-
-    if !exclude.contains("root") {
-        let root_dump = wallet.dump(&{
-            let mut root_exclude = exclude.clone();
-            root_exclude.insert("derivation".to_string());
-            root_exclude
-        })?;
-        blocks.push(
-            serde_json::to_string_pretty(&root_dump)
-                .map_err(|error| Error::new(&error.to_string(), None, None, None))?,
-        );
-    }
 
     let derivation = build_derivation(
         &args.dump.derivation,
@@ -118,21 +115,12 @@ fn dumps_json(args: &DumpsArgs) -> Result<String, Error> {
         args.dump.path.as_deref(),
         &args.dump.indexes,
     )?;
+    wallet.from_derivation(&args.dump.derivation, derivation)?;
 
-    let mut json_lines = Vec::new();
-    drive_derivations_json(
-        &mut wallet,
-        &args.dump.derivation,
-        cryptocurrency,
-        derivation.as_ref(),
-        derivation.derivations(),
-        Vec::new(),
-        &exclude,
-        &mut json_lines,
-    )?;
-
-    blocks.extend(json_lines);
-    Ok(blocks.join("\n\n"))
+    let dump = wallet
+        .dumps(&exclude)?
+        .ok_or_else(|| Error::new("Derivation is not set", None, None, None))?;
+    dumps_json_output(&dump)
 }
 
 fn build_wallet(args: &DumpArgs) -> Result<HDWallet, Error> {
@@ -162,7 +150,8 @@ fn drive_derivations(
     wallet: &mut HDWallet,
     derivation_name: &str,
     cryptocurrency: &CryptocurrencyDescriptor,
-    template: &dyn IDerivation,
+    template_path: &str,
+    template_indexes: &[u32],
     steps: &[DerivationStep],
     current: Vec<(u32, bool)>,
     include: &str,
@@ -170,8 +159,13 @@ fn drive_derivations(
     lines: &mut Vec<String>,
 ) -> Result<(), Error> {
     if steps.is_empty() {
-        let derivation =
-            rebuild_derivation(derivation_name, cryptocurrency, template, &current)?;
+        let derivation = rebuild_derivation(
+            derivation_name,
+            cryptocurrency,
+            template_path,
+            template_indexes,
+            &current,
+        )?;
         wallet.update_derivation(derivation_name, derivation)?;
 
         let mut exclude = HashSet::new();
@@ -201,7 +195,8 @@ fn drive_derivations(
                     wallet,
                     derivation_name,
                     cryptocurrency,
-                    template,
+                    template_path,
+                    template_indexes,
                     &steps[1..],
                     next,
                     include,
@@ -217,7 +212,8 @@ fn drive_derivations(
                 wallet,
                 derivation_name,
                 cryptocurrency,
-                template,
+                template_path,
+                template_indexes,
                 &steps[1..],
                 next,
                 include,
@@ -227,189 +223,6 @@ fn drive_derivations(
         }
     }
     Ok(())
-}
-
-fn drive_derivations_json(
-    wallet: &mut HDWallet,
-    derivation_name: &str,
-    cryptocurrency: &CryptocurrencyDescriptor,
-    template: &dyn IDerivation,
-    steps: &[DerivationStep],
-    current: Vec<(u32, bool)>,
-    exclude: &HashSet<String>,
-    lines: &mut Vec<String>,
-) -> Result<(), Error> {
-    if steps.is_empty() {
-        let derivation =
-            rebuild_derivation(derivation_name, cryptocurrency, template, &current)?;
-        wallet.update_derivation(derivation_name, derivation)?;
-        let dump = wallet.dump(exclude)?;
-        lines.push(
-            serde_json::to_string_pretty(&dump)
-                .map_err(|error| Error::new(&error.to_string(), None, None, None))?,
-        );
-        return Ok(());
-    }
-
-    match steps[0] {
-        DerivationStep::Range {
-            from,
-            to,
-            hardened,
-        } => {
-            for value in from..=to {
-                let mut next = current.clone();
-                next.push((value, hardened));
-                drive_derivations_json(
-                    wallet,
-                    derivation_name,
-                    cryptocurrency,
-                    template,
-                    &steps[1..],
-                    next,
-                    exclude,
-                    lines,
-                )?;
-            }
-        }
-        DerivationStep::Index { index, hardened } => {
-            let mut next = current.clone();
-            next.push((index, hardened));
-            drive_derivations_json(
-                wallet,
-                derivation_name,
-                cryptocurrency,
-                template,
-                &steps[1..],
-                next,
-                exclude,
-                lines,
-            )?;
-        }
-    }
-    Ok(())
-}
-
-fn rebuild_derivation(
-    derivation_name: &str,
-    cryptocurrency: &CryptocurrencyDescriptor,
-    template: &dyn IDerivation,
-    current: &[(u32, bool)],
-) -> Result<Box<dyn IDerivation>, Error> {
-    if current.is_empty() {
-        return build_derivation(
-            derivation_name,
-            cryptocurrency,
-            "0",
-            "0",
-            "0",
-            "0",
-            "0",
-            "0",
-            "0",
-            Some(template.path()),
-            template.indexes(),
-        );
-    }
-
-    let index = |position: usize| current.get(position).map(|(value, _)| value.to_string());
-
-    match derivation_name {
-        "BIP44" | "BIP49" | "BIP84" | "BIP86" if current.len() >= 5 => build_derivation(
-            derivation_name,
-            cryptocurrency,
-            &index(2).unwrap_or_else(|| "0".to_string()),
-            &index(3).unwrap_or_else(|| "0".to_string()),
-            &index(4).unwrap_or_else(|| "0".to_string()),
-            "0",
-            "0",
-            "0",
-            "0",
-            None,
-            &[],
-        ),
-        "CIP1852" if current.len() >= 5 => build_derivation(
-            derivation_name,
-            cryptocurrency,
-            &index(2).unwrap_or_else(|| "0".to_string()),
-            "0",
-            &index(4).unwrap_or_else(|| "0".to_string()),
-            &index(3).unwrap_or_else(|| "0".to_string()),
-            "0",
-            "0",
-            "0",
-            None,
-            &[],
-        ),
-        "Electrum" if current.len() >= 2 => build_derivation(
-            derivation_name,
-            cryptocurrency,
-            "0",
-            &index(0).unwrap_or_else(|| "0".to_string()),
-            &index(1).unwrap_or_else(|| "0".to_string()),
-            "0",
-            "0",
-            "0",
-            "0",
-            None,
-            &[],
-        ),
-        "Monero" if current.len() >= 2 => build_derivation(
-            derivation_name,
-            cryptocurrency,
-            "0",
-            "0",
-            "0",
-            "0",
-            "0",
-            &index(0).unwrap_or_else(|| "0".to_string()),
-            &index(1).unwrap_or_else(|| "0".to_string()),
-            None,
-            &[],
-        ),
-        "HDW" if current.len() >= 3 => build_derivation(
-            derivation_name,
-            cryptocurrency,
-            &index(0).unwrap_or_else(|| "0".to_string()),
-            "0",
-            &index(2).unwrap_or_else(|| "0".to_string()),
-            "0",
-            &index(1).unwrap_or_else(|| "0".to_string()),
-            "0",
-            "0",
-            None,
-            &[],
-        ),
-        _ => {
-            let path = format!(
-                "m/{}",
-                current
-                    .iter()
-                    .map(|(index, hardened)| {
-                        if *hardened {
-                            format!("{index}'")
-                        } else {
-                            index.to_string()
-                        }
-                    })
-                    .collect::<Vec<_>>()
-                    .join("/")
-            );
-            build_derivation(
-                "Custom",
-                cryptocurrency,
-                "0",
-                "0",
-                "0",
-                "0",
-                "0",
-                "0",
-                "0",
-                Some(&path),
-                &[],
-            )
-        }
-    }
 }
 
 fn value_to_csv_cell(value: &Value) -> String {

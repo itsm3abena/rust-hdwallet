@@ -1,5 +1,6 @@
 pub mod info;
 pub mod hdwallet;
+mod wallet_dumps;
 pub mod extended_keys;
 pub mod libs;
 pub mod utils;
@@ -17,7 +18,5 @@ pub mod entropies;
 pub mod mnemonics;
 pub mod seeds;
 pub mod eccs;
-
-#[cfg(test)]
-#[path = "tests/test_exceptions.rs"]
-mod test_exceptions;
+pub mod keys;
+pub mod symbols;

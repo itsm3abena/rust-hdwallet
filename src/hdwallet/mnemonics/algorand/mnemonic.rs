@@ -69,7 +69,7 @@ impl AlgorandMnemonic {
     pub fn from_entropy_bytes(entropy: &[u8], language: &str) -> Result<Self, MnemonicError> {
         let scheme = AlgorandEntropy;
         if !scheme.is_valid_bytes_strength(entropy.len()) {
-            return Err(MnemonicError::simple("Invalid entropy strength for Algorand"));
+            return Err(MnemonicError::simple("Wrong entropy strength"));
         }
 
         let checksum_full = sha512_256(entropy);
@@ -106,7 +106,7 @@ impl AlgorandMnemonic {
 
     pub fn decode_to_entropy(mnemonic: &[String]) -> Result<Vec<u8>, MnemonicError> {
         if mnemonic.len() != AlgorandMnemonicWords::TWENTY_FIVE {
-            return Err(MnemonicError::simple("Algorand mnemonic must be 25 words"));
+            return Err(MnemonicError::simple("Invalid mnemonic words"));
         }
 
         let (words_list, _) = Self::find_language(mnemonic)?;
@@ -160,7 +160,7 @@ impl IMnemonic for AlgorandMnemonic {
 
     fn from_words(words: usize, language: &str) -> Result<String, MnemonicError> {
         if words != AlgorandMnemonicWords::TWENTY_FIVE {
-            return Err(MnemonicError::simple("Algorand only supports 25 words"));
+            return Err(MnemonicError::simple("Invalid mnemonic words number"));
         }
         Self::generate_random(language).map(|m| m.mnemonic())
     }

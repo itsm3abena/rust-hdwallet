@@ -1,5 +1,6 @@
 use crate::hdwallet::cryptocurrencies::icryptocurrency::INetwork;
 use crate::hdwallet::cryptocurrencies::Cryptocurrencies;
+use crate::hdwallet::eccs::display_ecc_registry_name;
 use crate::hdwallet::exceptions::Error;
 
 pub fn list_cryptocurrencies() -> Result<String, Error> {
@@ -32,7 +33,7 @@ pub fn list_cryptocurrencies() -> Result<String, Error> {
                 descriptor.symbol.to_string(),
                 descriptor.coin_type.to_string(),
                 networks,
-                descriptor.ecc.to_string(),
+                display_ecc_registry_name(descriptor.ecc).to_string(),
             ]
         })
         .collect::<Vec<_>>();
@@ -56,6 +57,13 @@ fn tabulate(headers: &[&str], alignments: &[Alignment], rows: &[Vec<String>]) ->
 
     let mut output = format_row(headers, &widths, alignments);
     output.push('\n');
+    output.push_str(
+        &widths
+            .iter()
+            .map(|width| "-".repeat(*width))
+            .collect::<Vec<_>>()
+            .join("  "),
+    );
     for row in rows {
         let cells = row.iter().map(String::as_str).collect::<Vec<_>>();
         output.push_str(&format_row(&cells, &widths, alignments));

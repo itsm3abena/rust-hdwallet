@@ -15,7 +15,7 @@ use crate::hdwallet::derivations::{
     ChangeInput, ChangeValue, CustomDerivation, Derivations, EccInput, ElectrumDerivation,
     HdwDerivation, IDerivation, IndexInput, MoneroDerivation, RoleInput,
 };
-use crate::hdwallet::entropies::Entropies;
+use crate::hdwallet::entropies::{ElectrumV2Entropy, Entropies, IEntropy};
 use crate::hdwallet::exceptions::Error;
 use crate::hdwallet::hds::bip32::Bip32Hd;
 use crate::hdwallet::hds::algorand::AlgorandHd;
@@ -175,14 +175,22 @@ impl HDWallet {
         let entropy_bytes = hex::decode(entropy.trim()).map_err(|error| {
             Error::new("Invalid entropy hex", Some(&error.to_string()), None, None)
         })?;
-        self.strength = Some(entropy_bytes.len() * 8);
+        self.strength = Some(if client == "Electrum-V2" {
+            IEntropy::strength_bits_from_hex(&ElectrumV2Entropy, &hex::encode(&entropy_bytes))
+                .unwrap_or(entropy_bytes.len() * 8)
+        } else {
+            entropy_bytes.len() * 8
+        });
         self.entropy = Some(hex::encode(&entropy_bytes));
 
         let mnemonic = match client {
-            "Electrum-V2" => ElectrumV2Mnemonic::from_entropy(
-                &entropy_bytes,
+            "Electrum-V2" => ElectrumV2Mnemonic::from_entropy_with_retries(
+                &hex::encode(&entropy_bytes),
                 &self.language,
+                &self.mnemonic_type,
+                u128::MAX,
             )
+            .map(|m| m.mnemonic())
             .map_err(|error| Error::new(&error.to_string(), None, None, None))?,
             "Monero" => MoneroMnemonic::from_entropy_with_checksum(
                 &entropy_bytes,
@@ -256,7 +264,12 @@ impl HDWallet {
         };
 
         self.entropy = Some(hex::encode(&entropy_bytes));
-        self.strength = Some(entropy_bytes.len() * 8);
+        self.strength = Some(if client == "Electrum-V2" {
+            IEntropy::strength_bits_from_hex(&ElectrumV2Entropy, &hex::encode(&entropy_bytes))
+                .unwrap_or(entropy_bytes.len() * 8)
+        } else {
+            entropy_bytes.len() * 8
+        });
         self.mnemonic = Some(mnemonic.to_string());
 
         let seed_client = match self.hd.as_str() {
@@ -300,22 +313,12 @@ impl HDWallet {
                 None,
             ));
         }
-        if self.hd.as_str() == "Cardano" && self.cardano_type == "byron-legacy" {
-            return Err(Error::new(
-                &format!(
-                    "Conversion from xprivate key is not implemented for the {} HD {} type",
-                    self.hd, self.cardano_type
-                ),
-                None,
-                None,
-                None,
-            ));
-        }
         self.strict = strict;
         self.encoded = encoded;
         match self.hd.as_str() {
             "Cardano" => {
                 let mut hd = CardanoHd::new(&self.cardano_type, self.network.name)?;
+                self.configure_cardano_hd(&mut hd)?;
                 hd.from_xprivate_key(xprivate_key, encoded, strict)?;
                 self.backend = Some(HdBackend::Cardano(hd));
                 Ok(())
@@ -336,6 +339,12 @@ impl HDWallet {
                     &self.public_key_type,
                     strict,
                 );
+                if self.uses_bip32_hd() {
+                    bip32.set_xkey_versions(
+                        xprivate_version_for_semantic(&self.network, self.semantic.as_deref()),
+                        xpublic_version_for_semantic(&self.network, self.semantic.as_deref()),
+                    );
+                }
                 bip32.from_xprivate_key(xprivate_key, encoded, strict)?;
                 self.backend = Some(HdBackend::Bip32(bip32));
                 Ok(())
@@ -373,6 +382,7 @@ impl HDWallet {
         match self.hd.as_str() {
             "Cardano" => {
                 let mut hd = CardanoHd::new(&self.cardano_type, self.network.name)?;
+                self.configure_cardano_hd(&mut hd)?;
                 hd.from_xpublic_key(xpublic_key, encoded, strict)?;
                 self.backend = Some(HdBackend::Cardano(hd));
                 Ok(())
@@ -393,6 +403,12 @@ impl HDWallet {
                     &self.public_key_type,
                     strict,
                 );
+                if self.uses_bip32_hd() {
+                    bip32.set_xkey_versions(
+                        xprivate_version_for_semantic(&self.network, self.semantic.as_deref()),
+                        xpublic_version_for_semantic(&self.network, self.semantic.as_deref()),
+                    );
+                }
                 bip32.from_xpublic_key(xpublic_key, encoded, strict)?;
                 self.backend = Some(HdBackend::Bip32(bip32));
                 Ok(())
@@ -422,6 +438,7 @@ impl HDWallet {
             }
             "Cardano" => {
                 let mut hd = CardanoHd::new(&self.cardano_type, self.network.name)?;
+                self.configure_cardano_hd(&mut hd)?;
                 hd.from_private_key_hex(private_key)?;
                 self.backend = Some(HdBackend::Cardano(hd));
                 Ok(())
@@ -488,10 +505,31 @@ impl HDWallet {
 
     pub fn from_public_key(&mut self, public_key: &str) -> Result<(), Error> {
         match self.hd.as_str() {
+            "Electrum-V1" => {
+                let mut hd = ElectrumV1Hd::new(&self.public_key_type, self.network.wif_prefix)?;
+                hd.from_public_key_hex(public_key)?;
+                self.backend = Some(HdBackend::ElectrumV1(hd));
+                Ok(())
+            }
             "Cardano" => {
                 let mut hd = CardanoHd::new(&self.cardano_type, self.network.name)?;
+                self.configure_cardano_hd(&mut hd)?;
                 hd.from_public_key_hex(public_key)?;
                 self.backend = Some(HdBackend::Cardano(hd));
+                Ok(())
+            }
+            hd if self.uses_bip32_hd() || hd == "Electrum-V2" => {
+                let mut bip32 = Bip32Hd::from_seed(
+                    map_bitcoin_network(self.network.name),
+                    &[0u8; 32],
+                )?;
+                bip32.configure(
+                    self.network.wif_prefix,
+                    &self.public_key_type,
+                    self.strict,
+                );
+                bip32.from_public_key(public_key)?;
+                self.backend = Some(HdBackend::Bip32(bip32));
                 Ok(())
             }
             other => Err(Error::new(
@@ -565,8 +603,12 @@ impl HDWallet {
         Ok(())
     }
 
-    fn derivation_name(&self) -> &str {
+    pub(crate) fn derivation_name(&self) -> &str {
         self.derivation_name.as_deref().unwrap_or("Custom")
+    }
+
+    pub fn cryptocurrency_descriptor(&self) -> &'static CryptocurrencyDescriptor {
+        self.cryptocurrency
     }
 
     pub fn derivation(&self) -> Option<&dyn IDerivation> {
@@ -607,14 +649,20 @@ impl HDWallet {
             "strength": self.strength,
             "mnemonic": self.mnemonic,
             "passphrase": self.passphrase,
-            "language": self.language,
+            "language": if self.mnemonic.is_some() {
+                json!(self.language)
+            } else {
+                json!(null)
+            },
             "seed": self.seed_hex,
             "ecc": display_ecc_name(self.cryptocurrency.ecc),
             "hd": self.hd,
-            "semantic": self.semantic,
         });
 
         if let Some(map) = root.as_object_mut() {
+            if self.uses_bip32_hd() || matches!(self.hd.as_str(), "Cardano" | "Algorand") {
+                map.insert("semantic".to_string(), json!(self.semantic));
+            }
             match self.backend.as_ref() {
                 Some(HdBackend::Bip32(bip32)) if self.uses_bip32_hd() => {
                     map.insert(
@@ -647,12 +695,12 @@ impl HDWallet {
                 }
                 Some(HdBackend::ElectrumV1(hd)) => {
                     map.insert(
-                        "root_private_key".to_string(),
+                        "master_private_key".to_string(),
                         json!(hd.master_private_key()),
                     );
-                    map.insert("root_wif".to_string(), json!(hd.master_wif()));
+                    map.insert("master_wif".to_string(), json!(hd.master_wif()));
                     map.insert(
-                        "root_public_key".to_string(),
+                        "master_public_key".to_string(),
                         json!(hd.master_public_key()),
                     );
                     map.insert(
@@ -663,12 +711,12 @@ impl HDWallet {
                 }
                 Some(HdBackend::ElectrumV2(hd)) => {
                     map.insert(
-                        "root_private_key".to_string(),
+                        "master_private_key".to_string(),
                         json!(hd.master_private_key()),
                     );
-                    map.insert("root_wif".to_string(), json!(hd.master_wif()));
+                    map.insert("master_wif".to_string(), json!(hd.master_wif()));
                     map.insert(
-                        "root_public_key".to_string(),
+                        "master_public_key".to_string(),
                         json!(hd.master_public_key()),
                     );
                     map.insert(
@@ -676,6 +724,8 @@ impl HDWallet {
                         json!(hd.public_key_type()),
                     );
                     map.insert("wif_type".to_string(), json!(hd.wif_type()));
+                    map.insert("mode".to_string(), json!(hd.mode()));
+                    map.insert("mnemonic_type".to_string(), json!(self.mnemonic_type));
                 }
                 Some(HdBackend::Cardano(hd)) => {
                     map.insert("cardano_type".to_string(), json!(hd.cardano_type()));
@@ -748,12 +798,14 @@ impl HDWallet {
                         "primary_address".to_string(),
                         json!(MoneroHd::primary_address(hd).ok()),
                     );
-                    if let Some(payment_id) = self.payment_id.as_deref() {
-                        if let Ok(bytes) = hex::decode(payment_id.trim()) {
-                            map.insert(
-                                "integrated_address".to_string(),
-                                json!(hd.integrated_address(&bytes).ok()),
-                            );
+                    if hd.private_key().is_none() {
+                        if let Some(payment_id) = self.payment_id.as_deref() {
+                            if let Ok(bytes) = hex::decode(payment_id.trim()) {
+                                map.insert(
+                                    "integrated_address".to_string(),
+                                    json!(hd.integrated_address(&bytes).ok()),
+                                );
+                            }
                         }
                     }
                 }
@@ -774,16 +826,15 @@ impl HDWallet {
         let backend = self.backend.as_ref().ok_or_else(|| {
             Error::new("HD wallet is not initialized from a master key source", None, None, None)
         })?;
-        let derivation = self.derivation.as_ref().ok_or_else(|| {
-            Error::new("Derivation is not set", None, None, None)
-        })?;
         let derivation_name = self.derivation_name();
-        let at = derivation_at(derivation_name, derivation.as_ref());
+        let at = self
+            .derivation
+            .as_ref()
+            .map(|derivation| derivation_at(derivation_name, derivation.as_ref()));
 
         match backend {
             HdBackend::Bip32(bip32) => {
                 let mut dump = json!({
-                    "at": at,
                     "xprivate_key": bip32.xprivate_key(self.encoded),
                     "xpublic_key": bip32.xpublic_key(self.encoded),
                     "private_key": bip32.private_key(),
@@ -796,7 +847,32 @@ impl HDWallet {
                     "fingerprint": bip32.fingerprint(),
                     "parent_fingerprint": bip32.parent_fingerprint(),
                 });
-                if let Some(addresses) = self.build_addresses_dump(bip32.public_key().as_deref())? {
+                if let Some(at) = at {
+                    if let Some(object) = dump.as_object_mut() {
+                        object.insert("at".to_string(), at);
+                    }
+                }
+                if self.hd.as_str() == "BIP32" {
+                    if let Some(addresses) =
+                        self.build_addresses_dump(bip32.public_key().as_deref())?
+                    {
+                        if let Some(object) = dump.as_object_mut() {
+                            object.insert("addresses".to_string(), addresses);
+                        }
+                    }
+                } else if matches!(
+                    self.hd.as_str(),
+                    "BIP44" | "BIP49" | "BIP84" | "BIP86" | "BIP141"
+                ) {
+                    if let Some(object) = dump.as_object_mut() {
+                        object.insert(
+                            "address".to_string(),
+                            json!(self.encode_address(bip32.public_key().as_deref())?),
+                        );
+                    }
+                } else if let Some(addresses) =
+                    self.build_addresses_dump(bip32.public_key().as_deref())?
+                {
                     if let Some(object) = dump.as_object_mut() {
                         if addresses.as_object().map(|m| !m.is_empty()).unwrap_or(false) {
                             object.insert("addresses".to_string(), addresses);
@@ -808,13 +884,11 @@ impl HDWallet {
                             );
                         }
                     }
-                } else {
-                    if let Some(object) = dump.as_object_mut() {
-                        object.insert(
-                            "address".to_string(),
-                            json!(self.encode_address(bip32.public_key().as_deref())?),
-                        );
-                    }
+                } else if let Some(object) = dump.as_object_mut() {
+                    object.insert(
+                        "address".to_string(),
+                        json!(self.encode_address(bip32.public_key().as_deref())?),
+                    );
                 }
                 Ok(dump)
             }
@@ -832,10 +906,13 @@ impl HDWallet {
                 }))
             }
             HdBackend::ElectrumV2(hd) => {
-                let witness_version = self
-                    .network
-                    .witness_versions
-                    .map(|versions| versions.0[0]);
+                let witness_version = if hd.mode().as_deref() == Some(crate::hdwallet::consts::Modes::SEGWIT) {
+                    Some(0)
+                } else {
+                    self.network
+                        .witness_versions
+                        .map(|versions| versions.0[0])
+                };
                 let address = hd.encode_address(
                     self.network.public_key_address_prefix,
                     self.network.hrp,
@@ -853,18 +930,23 @@ impl HDWallet {
             }
             HdBackend::Cardano(hd) => {
                 let address = hd.encode_address()?;
-                Ok(json!({
-                    "at": at,
+                let mut dump = json!({
                     "xprivate_key": hd.xprivate_key(self.encoded),
                     "xpublic_key": hd.xpublic_key(self.encoded),
                     "private_key": hd.private_key(),
                     "chain_code": hd.chain_code(),
                     "public_key": hd.public_key(),
+                    "hash": hd.hash(),
                     "fingerprint": hd.fingerprint(),
                     "parent_fingerprint": hd.parent_fingerprint(),
-                    "path": hd.path(),
                     "address": address,
-                }))
+                });
+                if let Some(at) = at {
+                    if let Some(object) = dump.as_object_mut() {
+                        object.insert("at".to_string(), at);
+                    }
+                }
+                Ok(dump)
             }
             HdBackend::Algorand(hd) => {
                 let address = hd.address().map_err(|error| {
@@ -899,37 +981,23 @@ impl HDWallet {
         }
 
         let mut addresses = Map::new();
-        let compressed = self.public_key_type != PublicKeyTypes::UNCOMPRESSED;
-        let kwargs = EncodeKwargs {
-            public_key_type: Some(if compressed {
-                PublicKeyTypes::COMPRESSED
-            } else {
-                PublicKeyTypes::UNCOMPRESSED
-            }),
-            network: Some(self.network.name),
-            public_key_address_prefix: self.network.public_key_address_prefix,
-            script_address_prefix: self.network.script_address_prefix,
-            witness_version: self
-                .network
-                .witness_versions
-                .map(|versions| versions.0[0]),
-            alphabet: self
-                .cryptocurrency
-                .params
-                .and_then(|params| params.alphabet),
-            hrp: self.network.hrp,
-            ..Default::default()
-        };
         let public_key_input = EncodePublicKey::Str(public_key);
 
         if matches!(
             self.cryptocurrency.name,
             "Bitcoin-Cash" | "Bitcoin-Cash-SLP" | "eCash"
         ) {
+            let kwargs = self.base_encode_kwargs(None);
             if let Some(address_types) = self.cryptocurrency.address_types {
                 for (label, _) in address_types {
                     for address_name in self.cryptocurrency.addresses {
+                        let registry =
+                            resolve_address_registry_name(self.cryptocurrency.address_types, address_name);
                         let mut address_kwargs = kwargs.clone();
+                        address_kwargs.witness_version = self
+                            .network
+                            .witness_versions
+                            .and_then(|versions| versions.get_witness_version(registry));
                         address_kwargs.public_key_address_prefix = legacy_or_std_prefix(
                             self.network.legacy_public_key_address_prefix,
                             self.network.std_public_key_address_prefix,
@@ -940,7 +1008,7 @@ impl HDWallet {
                             self.network.std_script_address_prefix,
                             label,
                         );
-                        if let Ok(scheme) = Addresses::address(address_name) {
+                        if let Ok(scheme) = Addresses::address(registry) {
                             if let Ok(encoded) = scheme.encode(public_key_input, &address_kwargs) {
                                 addresses.insert(
                                     format!(
@@ -956,6 +1024,7 @@ impl HDWallet {
                 }
             }
         } else if self.cryptocurrency.name == "Tezos" {
+            let kwargs = self.base_encode_kwargs(None);
             if let Some(prefixes) = self.cryptocurrency.address_prefixes {
                 for prefix in prefixes {
                     let mut address_kwargs = kwargs.clone();
@@ -969,8 +1038,11 @@ impl HDWallet {
             }
         } else {
             for address_name in self.cryptocurrency.addresses {
+                let registry =
+                    resolve_address_registry_name(self.cryptocurrency.address_types, address_name);
                 let key = address_name.to_ascii_lowercase().replace('-', "_");
-                if let Ok(scheme) = Addresses::address(address_name) {
+                let kwargs = self.base_encode_kwargs(Some(registry));
+                if let Ok(scheme) = Addresses::address(registry) {
                     if let Ok(encoded) = scheme.encode(public_key_input, &kwargs) {
                         addresses.insert(key, json!(encoded));
                     }
@@ -985,12 +1057,9 @@ impl HDWallet {
         }
     }
 
-    fn encode_address(&self, public_key: Option<&str>) -> Result<String, Error> {
-        let public_key = public_key.ok_or_else(|| {
-            Error::new("Public key is not available for address encoding", None, None, None)
-        })?;
+    fn base_encode_kwargs(&self, address_registry: Option<&str>) -> EncodeKwargs<'_> {
         let compressed = self.public_key_type != PublicKeyTypes::UNCOMPRESSED;
-        let kwargs = EncodeKwargs {
+        EncodeKwargs {
             public_key_type: Some(if compressed {
                 PublicKeyTypes::COMPRESSED
             } else {
@@ -999,17 +1068,51 @@ impl HDWallet {
             network: Some(self.network.name),
             public_key_address_prefix: self.network.public_key_address_prefix,
             script_address_prefix: self.network.script_address_prefix,
-            witness_version: self
-                .network
-                .witness_versions
-                .map(|versions| versions.0[0]),
+            witness_version: address_registry.and_then(|address| {
+                self.network
+                    .witness_versions
+                    .and_then(|versions| versions.get_witness_version(address))
+            }),
             alphabet: self
                 .cryptocurrency
                 .params
                 .and_then(|params| params.alphabet),
+            hrp: self.network.hrp,
             ..Default::default()
-        };
+        }
+    }
 
+    fn configure_cardano_hd(&self, hd: &mut CardanoHd) -> Result<(), Error> {
+        if let Some(staking_public_key) = self.staking_public_key.as_deref() {
+            let bytes = hex::decode(staking_public_key.trim()).map_err(|error| {
+                Error::new(
+                    "Invalid staking public key hex",
+                    Some(&error.to_string()),
+                    None,
+                    None,
+                )
+            })?;
+            hd.set_staking_public_key(Some(&bytes));
+        }
+        hd.set_address_type(self.address_type.clone());
+        Ok(())
+    }
+
+    fn encode_address(&self, public_key: Option<&str>) -> Result<String, Error> {
+        let public_key = public_key.ok_or_else(|| {
+            Error::new("Public key is not available for address encoding", None, None, None)
+        })?;
+        let address_registry = match self.hd.as_str() {
+            "BIP49" => "P2WPKH-In-P2SH",
+            "BIP84" | "BIP141" if self.semantic.as_deref() == Some("p2wpkh") => "P2WPKH",
+            "BIP141" if self.semantic.as_deref() == Some("p2wpkh-in-p2sh") => "P2WPKH-In-P2SH",
+            "BIP141" if self.semantic.as_deref() == Some("p2wsh") => "P2WSH",
+            "BIP141" if self.semantic.as_deref() == Some("p2wsh-in-p2sh") => "P2WSH-In-P2SH",
+            "BIP86" => "P2TR",
+            "BIP44" => "P2PKH",
+            _ => self.cryptocurrency.default_address,
+        };
+        let kwargs = self.base_encode_kwargs(Some(address_registry));
         let public_key_input = EncodePublicKey::Str(public_key);
         if self.cryptocurrency.addresses.len() > 1
             || matches!(self.hd.as_str(), "BIP32" | "BIP141")
@@ -1019,28 +1122,21 @@ impl HDWallet {
                 "BIP84" | "BIP141" if self.semantic.as_deref() == Some("p2wpkh") => {
                     P2WPKHAddress.encode(public_key_input, &kwargs)
                 }
+                "BIP141" if self.semantic.as_deref() == Some("p2wpkh-in-p2sh") => {
+                    P2WPKHInP2SHAddress.encode(public_key_input, &kwargs)
+                }
                 "BIP86" => P2TRAddress.encode(public_key_input, &kwargs),
                 "BIP44" => P2PKHAddress.encode(public_key_input, &kwargs),
-                _ => {
-                    let address_name = self.cryptocurrency.default_address;
-                    Addresses::address(address_name)
-                        .map_err(|error| Error::new(&error.to_string(), None, None, None))?
-                        .encode(public_key_input, &kwargs)
-                }
+                _ => Addresses::address(address_registry)
+                    .map_err(|error| Error::new(&error.to_string(), None, None, None))?
+                    .encode(public_key_input, &kwargs),
             }
             .map_err(|error| {
                 Error::new("Address encoding failed", Some(&error.to_string()), None, None)
             });
         }
 
-        let address_name = match self.hd.as_str() {
-            "BIP49" => "P2WPKH-In-P2SH",
-            "BIP84" => "P2WPKH",
-            "BIP86" => "P2TR",
-            "BIP44" => "P2PKH",
-            _ => self.cryptocurrency.default_address,
-        };
-        Addresses::address(address_name)
+        Addresses::address(address_registry)
             .map_err(|error| Error::new(&error.to_string(), None, None, None))?
             .encode(public_key_input, &kwargs)
             .map_err(|error| {
@@ -1063,7 +1159,11 @@ impl HDWallet {
                 bip32.configure(
                     self.network.wif_prefix,
                     &self.public_key_type,
-                    self.strict,
+                    true,
+                );
+                bip32.set_xkey_versions(
+                    xprivate_version_for_semantic(&self.network, self.semantic.as_deref()),
+                    xpublic_version_for_semantic(&self.network, self.semantic.as_deref()),
                 );
                 Ok(HdBackend::Bip32(bip32))
             }
@@ -1084,18 +1184,7 @@ impl HDWallet {
             }
             "Cardano" => {
                 let mut hd = CardanoHd::new(&self.cardano_type, self.network.name)?;
-                if let Some(staking_public_key) = self.staking_public_key.as_deref() {
-                    let bytes = hex::decode(staking_public_key.trim()).map_err(|error| {
-                        Error::new(
-                            "Invalid staking public key hex",
-                            Some(&error.to_string()),
-                            None,
-                            None,
-                        )
-                    })?;
-                    hd.set_staking_public_key(Some(&bytes));
-                }
-                hd.set_address_type(self.address_type.clone());
+                self.configure_cardano_hd(&mut hd)?;
                 hd.from_seed_bytes(seed_bytes, self.passphrase.as_deref())?;
                 Ok(HdBackend::Cardano(hd))
             }
@@ -1347,6 +1436,20 @@ pub fn flatten_dump_row(dump: &Value, include: &str) -> Map<String, Value> {
     row
 }
 
+fn resolve_address_registry_name(
+    address_types: Option<crate::hdwallet::cryptocurrencies::icryptocurrency::AddressTypes>,
+    address_key: &str,
+) -> &str {
+    if let Some(types) = address_types {
+        for (key, registry) in types {
+            if *key == address_key {
+                return registry;
+            }
+        }
+    }
+    address_key
+}
+
 fn derivation_at(derivation_name: &str, derivation: &dyn IDerivation) -> Value {
     match derivation_name {
         "BIP44" | "BIP49" | "BIP84" | "BIP86" => json!({
@@ -1377,8 +1480,8 @@ fn derivation_at(derivation_name: &str, derivation: &dyn IDerivation) -> Value {
         }),
         "Electrum" => json!({
             "change": derivation.change().map(|value| match value {
-                ChangeValue::Label(label) => label.to_string(),
-                ChangeValue::Index(index) => index.to_string(),
+                ChangeValue::Label(label) => json!(label),
+                ChangeValue::Index(index) => json!(index),
             }),
             "address": derivation.address(),
         }),
@@ -1386,11 +1489,20 @@ fn derivation_at(derivation_name: &str, derivation: &dyn IDerivation) -> Value {
             "minor": derivation.minor(),
             "major": derivation.major(),
         }),
-        _ => json!({
-            "path": derivation.path(),
-            "indexes": derivation.indexes(),
-            "depth": derivation.depth(),
-        }),
+        _ => {
+            let indexes = derivation.indexes();
+            let mut at = json!({
+                "path": derivation.path(),
+                "indexes": indexes,
+                "depth": derivation.depth(),
+            });
+            if let Some(index) = indexes.last() {
+                if let Some(object) = at.as_object_mut() {
+                    object.insert("index".to_string(), json!(index));
+                }
+            }
+            at
+        }
     }
 }
 
@@ -1430,6 +1542,40 @@ fn resolve_semantic(
         "BIP84" | "BIP141" => Some("p2wpkh".to_string()),
         _ => None,
     }
+}
+
+fn semantic_xkey_label(semantic: Option<&str>) -> &'static str {
+    match semantic {
+        Some("p2wpkh-in-p2sh") => "P2WPKH_IN_P2SH",
+        Some("p2wpkh") => "P2WPKH",
+        Some("p2wsh") => "P2WSH",
+        Some("p2wsh-in-p2sh") => "P2WSH_IN_P2SH",
+        Some("p2tr") => "P2TR",
+        Some("p2sh") => "P2SH",
+        _ => "P2PKH",
+    }
+}
+
+fn xprivate_version_for_semantic(
+    network: &crate::hdwallet::cryptocurrencies::icryptocurrency::NetworkDescriptor,
+    semantic: Option<&str>,
+) -> u32 {
+    let label = semantic_xkey_label(semantic);
+    network
+        .xprivate_key_versions
+        .and_then(|versions| versions.iter().find(|(name, _)| *name == label).map(|(_, v)| *v))
+        .unwrap_or(0x0488ade4)
+}
+
+fn xpublic_version_for_semantic(
+    network: &crate::hdwallet::cryptocurrencies::icryptocurrency::NetworkDescriptor,
+    semantic: Option<&str>,
+) -> u32 {
+    let label = semantic_xkey_label(semantic);
+    network
+        .xpublic_key_versions
+        .and_then(|versions| versions.iter().find(|(name, _)| *name == label).map(|(_, v)| *v))
+        .unwrap_or(0x0488b21e)
 }
 
 fn display_ecc_name(name: &str) -> String {

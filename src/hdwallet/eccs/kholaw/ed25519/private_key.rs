@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::hdwallet::libs::ed25519::{point_scalar_mul_base, scalar_is_valid, COORD_BYTE_LEN};
+use crate::hdwallet::libs::ed25519::{point_scalar_mul_base, COORD_BYTE_LEN};
 
 use crate::hdwallet::eccs::EccsError;
 use crate::hdwallet::eccs::iprivate_key::IPrivateKey;
@@ -28,10 +28,6 @@ impl IPrivateKey for KholawEd25519PrivateKey {
         }
         let signing: [u8; COORD_BYTE_LEN] = bytes[..COORD_BYTE_LEN].try_into().unwrap();
         let chain: [u8; COORD_BYTE_LEN] = bytes[COORD_BYTE_LEN..].try_into().unwrap();
-        let v = crate::hdwallet::libs::ed25519::int_decode(&signing);
-        if !scalar_is_valid(&v) {
-            return Err(EccsError::InvalidEd25519);
-        }
         Ok(Self { signing, chain })
     }
 

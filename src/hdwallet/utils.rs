@@ -310,42 +310,44 @@ pub fn words_to_bytes_chunk_le(word1: &str, word2: &str, word3: &str, words_list
     chunk_val.to_le_bytes().to_vec()
 }
 
-/// Algorand-style 8→11 bit conversion (outputs word indices, 0..2048).
-pub fn convert_bits_8_to_11(data: &[u8]) -> Option<Vec<u32>> {
+/// Python `convert_bits` parity (LSB-first accumulator).
+pub fn convert_bits(data: &[u32], from_bits: u32, to_bits: u32) -> Option<Vec<u32>> {
+    let max_out_val = (1u32 << to_bits) - 1;
+    let from_mask = if from_bits >= 32 {
+        u32::MAX
+    } else {
+        (1u32 << from_bits) - 1
+    };
     let mut acc = 0u32;
     let mut bits = 0u32;
-    let mut out = Vec::new();
-    for &byte in data {
-        acc = (acc << 8) | byte as u32;
-        bits += 8;
-        while bits >= 11 {
-            bits -= 11;
-            out.push((acc >> bits) & 0x7ff);
+    let mut ret = Vec::new();
+    for &value in data {
+        if value > from_mask {
+            return None;
+        }
+        acc |= value << bits;
+        bits += from_bits;
+        while bits >= to_bits {
+            ret.push(acc & max_out_val);
+            acc >>= to_bits;
+            bits -= to_bits;
         }
     }
-    if bits > 0 {
-        out.push((acc << (11 - bits)) & 0x7ff);
+    if bits != 0 {
+        ret.push(acc & max_out_val);
     }
-    Some(out)
+    Some(ret)
+}
+
+/// Algorand-style 8→11 bit conversion (outputs word indices, 0..2048).
+pub fn convert_bits_8_to_11(data: &[u8]) -> Option<Vec<u32>> {
+    let input: Vec<u32> = data.iter().map(|&byte| u32::from(byte)).collect();
+    convert_bits(&input, 8, 11)
 }
 
 /// 11→8 for Algorand decode (input: word indices).
 pub fn convert_bits_11_to_8(data: &[u32]) -> Option<Vec<u8>> {
-    let mut acc = 0u64;
-    let mut bits = 0u32;
-    let mut out = Vec::new();
-    for &val in data {
-        if val > 0x7ff {
-            return None;
-        }
-        acc = (acc << 11) | val as u64;
-        bits += 11;
-        while bits >= 8 {
-            bits -= 8;
-            out.push((acc >> bits) as u8);
-        }
-    }
-    Some(out)
+    convert_bits(data, 11, 8).map(|values| values.into_iter().map(|value| value as u8).collect())
 }
 
 pub fn parse_wordlist_text(text: &str) -> Vec<String> {
@@ -363,6 +365,12 @@ pub fn integer_to_bytes_python(value: u32, bytes_num: Option<usize>) -> Vec<u8> 
     });
     let be = value.to_be_bytes();
     be[4 - bytes_num..].to_vec()
+}
+
+pub fn blake2b_512(data: &[u8]) -> [u8; 64] {
+    use blake2::digest::{consts::U64, Digest};
+    use blake2::Blake2b;
+    Blake2b::<U64>::digest(data).into()
 }
 
 pub fn blake2b_224(data: &[u8]) -> [u8; 28] {

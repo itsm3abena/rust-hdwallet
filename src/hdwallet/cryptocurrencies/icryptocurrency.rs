@@ -28,6 +28,22 @@ pub enum CryptocurrencyKind {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct WitnessVersions(pub &'static [u8]);
 
+impl WitnessVersions {
+    /// Mirrors Python `WitnessVersions.get_witness_version(address)`.
+    pub fn get_witness_version(&self, address: &str) -> Option<u8> {
+        let key = address.to_ascii_uppercase().replace('-', "_");
+        match key.as_str() {
+            "P2TR" if self.0.first() == Some(&0x01) && self.0.len() >= 3 => Some(0x01),
+            "P2WPKH" if self.0.first() == Some(&0x01) && self.0.len() >= 3 => Some(self.0[1]),
+            "P2WSH" if self.0.first() == Some(&0x01) && self.0.len() >= 3 => Some(self.0[2]),
+            "P2WPKH" if self.0.len() >= 2 => Some(self.0[0]),
+            "P2WSH" if self.0.len() >= 2 => Some(self.0[1]),
+            "P2WPKH" | "P2WSH" => self.0.first().copied(),
+            _ => None,
+        }
+    }
+}
+
 pub type XPrivateKeyVersions = &'static [(&'static str, u32)];
 
 pub type XPublicKeyVersions = &'static [(&'static str, u32)];

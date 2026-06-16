@@ -60,6 +60,20 @@ impl ElectrumV1Hd {
         self.from_private_key_bytes(&bytes)
     }
 
+    pub fn from_public_key_hex(&mut self, public_key: &str) -> HdResult<()> {
+        let bytes = hex::decode(public_key.trim()).map_err(|error| {
+            Error::new("Invalid public key hex", Some(&error.to_string()), None, None)
+        })?;
+        let public = SecpPublicKey::from_slice(&bytes).map_err(|error| {
+            Error::new("Invalid public key", Some(&error.to_string()), None, None)
+        })?;
+        self.compressed = bytes.len() != 65;
+        self.seed = None;
+        self.master_private = None;
+        self.master_public = public;
+        self.drive(self.change_index, self.address_index)
+    }
+
     pub fn from_wif_str(&mut self, wif: &str) -> HdResult<()> {
         let prefix = self.wif_prefix.ok_or_else(|| {
             Error::new("WIF prefix is not configured for this network", None, None, None)
@@ -186,6 +200,10 @@ impl Ihd for ElectrumV1Hd {
         self.from_private_key_hex(private_key)
     }
 
+    fn from_public_key(&mut self, public_key: &str) -> HdResult<()> {
+        self.from_public_key_hex(public_key)
+    }
+
     fn from_derivation(&mut self, _derivation: &str) -> HdResult<()> {
         Ok(())
     }
@@ -207,6 +225,9 @@ impl Ihd for ElectrumV1Hd {
     }
 
     fn wif_type(&self) -> Option<String> {
+        if self.master_private.is_none() {
+            return None;
+        }
         Some(if self.compressed {
             "wif-compressed".to_string()
         } else {

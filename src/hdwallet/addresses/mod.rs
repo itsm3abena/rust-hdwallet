@@ -105,6 +105,14 @@ impl Addresses {
                 return Ok(*class);
             }
         }
+        let normalized = name.replace('_', "-");
+        if normalized != name {
+            for class in classes::CLASS_ORDER {
+                if class.name() == normalized {
+                    return Ok(*class);
+                }
+            }
+        }
         let expected = Self::names().join(", ");
         Err(AddressError::new(
             "Invalid address name",

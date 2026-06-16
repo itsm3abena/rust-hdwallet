@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 use std::marker::PhantomData;
 
-use crate::hdwallet::libs::ed25519::{point_scalar_mul_base, scalar_is_valid, COORD_BYTE_LEN};
+use crate::hdwallet::libs::ed25519::{scalar_is_valid, COORD_BYTE_LEN};
 
 use crate::hdwallet::eccs::EccsError;
 use crate::hdwallet::eccs::iprivate_key::IPrivateKey;
@@ -17,7 +17,7 @@ pub struct Slip10Ed25519PrivateKey<V: Ed25519Variant> {
 
 impl<V: Ed25519Variant> Slip10Ed25519PrivateKey<V> {
     pub fn public_key(&self) -> Slip10Ed25519PublicKey<V> {
-        let enc = point_scalar_mul_base(&self.secret);
+        let enc = crate::hdwallet::libs::ed25519::public_key_from_hash_digest(&V::seed_hash(&self.secret));
         Slip10Ed25519PublicKey {
             enc,
             _v: PhantomData,

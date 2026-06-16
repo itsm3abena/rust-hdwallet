@@ -2,6 +2,7 @@ pub mod dump;
 pub mod dumps;
 pub mod generate;
 pub mod list;
+pub mod parse;
 
 use clap::{Parser, Subcommand};
 
@@ -98,20 +99,30 @@ enum ListCommands {
 
 /// Run the HDWallet CLI (mirrors Python `hdwallet/cli/__main__.py`).
 pub fn run() -> i32 {
-    match Cli::try_parse() {
-        Ok(cli) => match cli.execute() {
-            Ok(output) => {
-                println!("{output}");
-                0
-            }
-            Err(error) => {
-                eprintln!("Error: {error}");
-                1
-            }
-        },
+    match run_from(std::env::args().skip(1)) {
+        Ok(output) => {
+            println!("{output}");
+            0
+        }
+        Err(code) => code,
+    }
+}
+
+/// In-process CLI runner (mirrors pytest `CliRunner`).
+pub fn run_from<I, S>(args: I) -> Result<String, i32>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<str> + std::fmt::Display,
+{
+    let argv: Vec<String> = args.into_iter().map(|arg| arg.to_string()).collect();
+    match Cli::try_parse_from(std::iter::once("hdwallet".to_string()).chain(argv)) {
+        Ok(cli) => cli.execute().map_err(|error| {
+            eprintln!("Error: {error}");
+            1
+        }),
         Err(error) => {
             error.print().expect("print clap error");
-            i32::from(error.exit_code())
+            Err(i32::from(error.exit_code()))
         }
     }
 }

@@ -5,9 +5,145 @@ edition = "2024"
 description = "Hierarchical deterministic wallet primitives mirroring hdwallet-io/python-hdwallet layout"
 license = "MIT"
 
+[lib]
+name = "hdwallet_rust"
+path = "src/lib.rs"
+
 [[bin]]
 name = "hdwallet"
 path = "src/bin/hdwallet.rs"
+
+[[test]]
+name = "test_base58"
+path = "tests/test_base58.rs"
+
+[[test]]
+name = "test_keys"
+path = "tests/test_keys.rs"
+
+[[test]]
+name = "test_exceptions"
+path = "tests/test_exceptions.rs"
+
+[[test]]
+name = "test_cryptos"
+path = "tests/test_cryptos.rs"
+
+[[test]]
+name = "test_symbols"
+path = "tests/test_symbols.rs"
+
+[[test]]
+name = "cli"
+path = "tests/cli/mod.rs"
+
+[[test]]
+name = "hdwallet_addresses"
+path = "tests/hdwallet/addresses/mod.rs"
+
+[[test]]
+name = "hdwallet_derivations"
+path = "tests/hdwallet/derivations/mod.rs"
+
+[[test]]
+name = "hdwallet_eccs"
+path = "tests/hdwallet/eccs/mod.rs"
+
+[[test]]
+name = "hdwallet_entropies"
+path = "tests/hdwallet/entropies/mod.rs"
+
+[[test]]
+name = "hdwallet_hds"
+path = "tests/hdwallet/hds/mod.rs"
+
+[[test]]
+name = "hdwallet_hds_cardano"
+path = "tests/hdwallet/hds/cardano/mod.rs"
+
+[[test]]
+name = "hdwallet_hds_electrum"
+path = "tests/hdwallet/hds/electrum/mod.rs"
+
+[[test]]
+name = "hdwallet_hds_electrum_v2"
+path = "tests/hdwallet/hds/electrum/v2/mod.rs"
+
+[[test]]
+name = "hdwallet_hdwallet_bip141"
+path = "tests/hdwallet/hdwallet/bip141/mod.rs"
+
+[[test]]
+name = "hdwallet_hdwallet_bip32"
+path = "tests/hdwallet/hdwallet/bip32/mod.rs"
+
+[[test]]
+name = "hdwallet_hdwallet_bip44"
+path = "tests/hdwallet/hdwallet/bip44/mod.rs"
+
+[[test]]
+name = "hdwallet_hdwallet_bip49"
+path = "tests/hdwallet/hdwallet/bip49/mod.rs"
+
+[[test]]
+name = "hdwallet_hdwallet_bip84"
+path = "tests/hdwallet/hdwallet/bip84/mod.rs"
+
+[[test]]
+name = "hdwallet_hdwallet_bip86"
+path = "tests/hdwallet/hdwallet/bip86/mod.rs"
+
+[[test]]
+name = "hdwallet_hdwallet_cardano_byron_icarus"
+path = "tests/hdwallet/hdwallet/cardano/byron-icarus/mod.rs"
+
+[[test]]
+name = "hdwallet_hdwallet_cardano_byron_ledger"
+path = "tests/hdwallet/hdwallet/cardano/byron-ledger/mod.rs"
+
+[[test]]
+name = "hdwallet_hdwallet_cardano_byron_legacy"
+path = "tests/hdwallet/hdwallet/cardano/byron-legacy/mod.rs"
+
+[[test]]
+name = "hdwallet_hdwallet_cardano_shelley_icarus"
+path = "tests/hdwallet/hdwallet/cardano/shelley-icarus/mod.rs"
+
+[[test]]
+name = "hdwallet_hdwallet_cardano_shelley_ledger"
+path = "tests/hdwallet/hdwallet/cardano/shelley-ledger/mod.rs"
+
+[[test]]
+name = "hdwallet_hdwallet_electrum_v1"
+path = "tests/hdwallet/hdwallet/electrum/v1/mod.rs"
+
+[[test]]
+name = "hdwallet_hdwallet_electrum_v2_segwit"
+path = "tests/hdwallet/hdwallet/electrum/v2/segwit/mod.rs"
+
+[[test]]
+name = "hdwallet_hdwallet_electrum_v2_segwit_2fa"
+path = "tests/hdwallet/hdwallet/electrum/v2/segwit_2fa/mod.rs"
+
+[[test]]
+name = "hdwallet_hdwallet_electrum_v2_standard"
+path = "tests/hdwallet/hdwallet/electrum/v2/standard/mod.rs"
+
+[[test]]
+name = "hdwallet_hdwallet_electrum_v2_standard_2fa"
+path = "tests/hdwallet/hdwallet/electrum/v2/standard_2fa/mod.rs"
+
+[[test]]
+name = "hdwallet_hdwallet_monero"
+path = "tests/hdwallet/hdwallet/monero/mod.rs"
+
+[[test]]
+name = "hdwallet_mnemonics"
+path = "tests/hdwallet/mnemonics/mod.rs"
+
+[[test]]
+name = "hdwallet_seeds"
+path = "tests/hdwallet/seeds/mod.rs"
 
 [dependencies]
 bitcoin = { version = "0.32", default-features = false, features = ["std", "rand"] }
@@ -22,7 +158,7 @@ hmac = "0.13"
 sha2 = "0.11"
 base58 = "0.1"
 regex = "1"
-serde_json = "1"
+serde_json = { version = "1", features = ["arbitrary_precision"] }
 rand = "0.8"
 num-bigint = { version = "0.4", features = ["rand"] }
 num-traits = "0.2"
@@ -30,6 +166,7 @@ crc32fast = "1.4"
 crc = "3"
 serde_cbor = "0.11"
 blake2 = "0.10"
+byteorder = "1.5"
 data-encoding = "2.6"
 chacha20poly1305 = "0.10"
 bip38 = "1.1"

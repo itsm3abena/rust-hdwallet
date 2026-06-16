@@ -26,12 +26,12 @@ impl ElectrumV1Seed {
             SeedError::new(&e.to_string(), None, None, None)
         })?;
 
-        let encoded_entropy = entropy_bytes.as_slice();
+        let encoded_entropy = hex::encode(&entropy_bytes).into_bytes();
 
-        let mut entropy_hash = encoded_entropy.to_vec();
+        let mut entropy_hash = encoded_entropy.clone();
         for _ in 0..Self::HASH_ITERATION_NUMBER {
             let mut combined = entropy_hash;
-            combined.extend_from_slice(encoded_entropy);
+            combined.extend_from_slice(&encoded_entropy);
             entropy_hash = Sha256::digest(&combined).to_vec();
         }
 

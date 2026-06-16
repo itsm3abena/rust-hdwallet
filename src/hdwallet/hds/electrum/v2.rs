@@ -2,7 +2,7 @@ use bitcoin::Network;
 
 use crate::hdwallet::addresses::iaddress::{EncodeKwargs, EncodePublicKey, IAddress};
 use crate::hdwallet::addresses::{P2PKHAddress, P2WPKHAddress};
-use crate::hdwallet::consts::Modes;
+use crate::hdwallet::consts::{Modes, PublicKeyTypes};
 use crate::hdwallet::derivations::{CustomDerivation, IDerivation};
 use crate::hdwallet::exceptions::{Error, Result as HdResult};
 use crate::hdwallet::hds::bip32::Bip32Hd;
@@ -49,14 +49,15 @@ impl ElectrumV2Hd {
     pub fn drive(&mut self, change_index: u32, address_index: u32) -> HdResult<()> {
         self.change_index = change_index;
         self.address_index = address_index;
-        if self.mode == Modes::SEGWIT {
-            let derivation = CustomDerivation::new(
-                Some(&format!("m/0'/{change_index}/{address_index}")),
-                None,
-            )
+
+        let path = if self.mode == Modes::SEGWIT {
+            format!("m/0'/{change_index}/{address_index}")
+        } else {
+            format!("m/{change_index}/{address_index}")
+        };
+        let derivation = CustomDerivation::new(Some(&path), None)
             .map_err(|error| Error::new(&error.to_string(), None, None, None))?;
-            self.bip32.from_derivation(derivation.path())?;
-        }
+        self.bip32.from_derivation(derivation.path())?;
         Ok(())
     }
 
@@ -74,10 +75,10 @@ impl ElectrumV2Hd {
             .bip32
             .public_key()
             .ok_or_else(|| Error::new("Public key is not available", None, None, None))?;
-        let public_key_type = if self.bip32.public_key_type().as_deref() == Some("uncompressed") {
-            crate::hdwallet::consts::PublicKeyTypes::UNCOMPRESSED
+        let public_key_type = if self.bip32.public_key_type().as_deref() == Some(PublicKeyTypes::UNCOMPRESSED) {
+            PublicKeyTypes::UNCOMPRESSED
         } else {
-            crate::hdwallet::consts::PublicKeyTypes::COMPRESSED
+            PublicKeyTypes::COMPRESSED
         };
         let kwargs = EncodeKwargs {
             public_key_type: Some(public_key_type),

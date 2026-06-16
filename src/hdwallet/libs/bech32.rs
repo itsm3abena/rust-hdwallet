@@ -162,6 +162,16 @@ pub fn bech32_encode(hrp: &str, witness_version: u8, program: &[u8]) -> Option<S
     Some(ret)
 }
 
+/// Cardano Shelley-style bech32 encoding without a witness version prefix.
+pub fn bech32_encode_raw(hrp: &str, program: &[u8]) -> Option<String> {
+    let converted = convert_bits(program, 8, 5, true)?;
+    let ret = base_bech32_encode(hrp, &converted)?;
+    if base_bech32_decode(&ret).is_none() {
+        return None;
+    }
+    Some(ret)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

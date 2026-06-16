@@ -142,7 +142,7 @@ fn hash_checksum_bits(entropy: &[u8], cs_len: usize) -> Vec<u8> {
 impl BIP39Mnemonic {
     pub fn generate_random(word_count: usize, language: &str) -> Result<Self, MnemonicError> {
         if !is_valid_bip39_word_count(word_count) {
-            return Err(MnemonicError::simple(&format!("Invalid word count {}", word_count)));
+            return Err(MnemonicError::simple("Invalid mnemonic words number"));
         }
         let strength = match word_count {
             BIP39MnemonicWords::TWELVE => 128,
@@ -191,6 +191,10 @@ impl BIP39Mnemonic {
         Self::decode(words).is_ok()
     }
 
+    pub fn is_valid_mnemonic_words_with_wordlist(words: &[String], wordlist: &[String]) -> bool {
+        Self::decode_with_wordlist(words, wordlist).is_ok()
+    }
+
     pub fn encode_bytes(entropy: &[u8], language: &str) -> Result<String, MnemonicError> {
         let scheme = BIP39Entropy;
         if !scheme.is_valid_bytes_strength(entropy.len()) {
@@ -219,11 +223,15 @@ impl BIP39Mnemonic {
     }
 
     fn decode_with_lang(words: &[String], language: &str) -> Result<Vec<u8>, MnemonicError> {
+        let wl = load_normalized_wordlist(language)?;
+        Self::decode_with_wordlist(words, &wl)
+    }
+
+    fn decode_with_wordlist(words: &[String], wordlist: &[String]) -> Result<Vec<u8>, MnemonicError> {
         if !is_valid_bip39_word_count(words.len()) {
             return Err(MnemonicError::simple("Invalid mnemonic words count"));
         }
-        let wl = load_normalized_wordlist(language)?;
-        let map: HashMap<&str, u16> = wl
+        let map: HashMap<&str, u16> = wordlist
             .iter()
             .enumerate()
             .map(|(i, w)| (w.as_str(), i as u16))

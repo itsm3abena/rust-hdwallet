@@ -4,6 +4,7 @@ use clap::Args;
 use serde_json::Value;
 
 use crate::hdwallet::cryptocurrencies::get_cryptocurrency;
+use crate::hdwallet::cli::parse::parse_click_bool;
 use crate::hdwallet::derivations::Derivations;
 use crate::hdwallet::entropies::Entropies;
 use crate::hdwallet::exceptions::Error;
@@ -147,7 +148,13 @@ pub struct DumpArgs {
     )]
     pub mnemonic_type: String,
 
-    #[arg(long = "checksum", default_value_t = false, help = "Set Checksum for Monero")]
+    #[arg(
+        long = "checksum",
+        default_value = "false",
+        action = clap::ArgAction::Set,
+        value_parser = parse_click_bool,
+        help = "Set Checksum for Monero"
+    )]
     pub checksum: bool,
 
     #[arg(long = "semantic", help = "Set Semantic for BIP141")]
@@ -311,7 +318,7 @@ pub(crate) fn load_master_key(wallet: &mut HDWallet, args: &DumpArgs) -> Result<
     ))
 }
 
-fn should_apply_derivation(args: &DumpArgs) -> bool {
+pub(crate) fn should_apply_derivation(args: &DumpArgs) -> bool {
     args.entropy.is_some()
         || args.mnemonic.is_some()
         || args.seed.is_some()

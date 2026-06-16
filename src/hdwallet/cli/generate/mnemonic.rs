@@ -2,6 +2,7 @@ use clap::Args;
 use serde_json::{json, Value};
 
 use crate::hdwallet::exceptions::MnemonicError;
+use crate::hdwallet::cli::parse::parse_click_bool;
 use crate::hdwallet::mnemonics::{
     AlgorandMnemonic, AlgorandMnemonicLanguages, AlgorandMnemonicWords, BIP39Mnemonic,
     BIP39MnemonicLanguages, BIP39MnemonicWords, ElectrumV1Mnemonic, ElectrumV1MnemonicLanguages,
@@ -38,7 +39,13 @@ pub struct GenerateMnemonicArgs {
     )]
     pub max_attempts: String,
 
-    #[arg(long = "checksum", default_value_t = false, help = "Set Checksum for Monero")]
+    #[arg(
+        long = "checksum",
+        default_value = "false",
+        action = clap::ArgAction::Set,
+        value_parser = parse_click_bool,
+        help = "Set Checksum for Monero"
+    )]
     pub checksum: bool,
 }
 

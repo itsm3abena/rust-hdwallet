@@ -1,5 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
+use unicode_normalization::UnicodeNormalization;
+
 use crate::hdwallet::entropies::monero::MoneroEntropyStrengths;
 use crate::hdwallet::entropies::{IEntropy, MoneroEntropy};
 use crate::hdwallet::exceptions::MnemonicError;
@@ -18,6 +20,10 @@ impl MoneroMnemonicWordCounts {
 }
 
 pub struct MoneroMnemonicLanguages;
+
+pub(crate) fn normalize_word(word: &str) -> String {
+    word.to_lowercase().nfkd().collect()
+}
 
 impl MoneroMnemonicLanguages {
     pub const CHINESE_SIMPLIFIED: &'static str = "chinese-simplified";
@@ -133,13 +139,13 @@ impl MoneroMnemonic {
             return Err(MnemonicError::simple("Invalid Monero wordlist length"));
         }
         for w in &mut words {
-            *w = w.to_lowercase();
+            *w = normalize_word(w);
         }
         Ok(words)
     }
 
     pub fn find_language(mnemonic_words: &[String]) -> Result<(Vec<String>, String), MnemonicError> {
-        let lowered: Vec<String> = mnemonic_words.iter().map(|w| w.to_lowercase()).collect();
+        let lowered: Vec<String> = mnemonic_words.iter().map(|w| normalize_word(w)).collect();
         for &lang in Self::languages() {
             let list = Self::get_words_list_by_language(lang)?;
             let set: HashSet<_> = list.iter().cloned().collect();
@@ -152,10 +158,7 @@ impl MoneroMnemonic {
 
     pub fn generate_random(word_count: usize, language: &str) -> Result<Self, MnemonicError> {
         if !Self::words_list().contains(&word_count) {
-            return Err(MnemonicError::simple(&format!(
-                "Invalid Monero word count {}",
-                word_count
-            )));
+            return Err(MnemonicError::simple("Invalid mnemonic words number"));
         }
         let bits = *Self::words_to_entropy_strength()
             .get(&word_count)
@@ -201,10 +204,7 @@ impl MoneroMnemonic {
 
             let prefixes: String = mnemonic
                 .iter()
-                .map(|w| {
-                    let end = prefix_len.min(w.len());
-                    &w[..end]
-                })
+                .map(|w| w.chars().take(prefix_len).collect::<String>())
                 .collect();
 
             let crc = crc32_ieee(prefixes.as_bytes()) as usize;
@@ -222,11 +222,11 @@ impl MoneroMnemonic {
     pub fn parse_phrase(phrase: &str) -> Result<Vec<u8>, MnemonicError> {
         let words: Vec<String> = phrase
             .split_whitespace()
-            .map(|w| w.to_lowercase())
+            .map(normalize_word)
             .collect();
 
         if !Self::words_list().contains(&words.len()) {
-            return Err(MnemonicError::simple("Invalid Monero mnemonic length"));
+            return Err(MnemonicError::simple("Invalid mnemonic words"));
         }
 
         let (words_list, _) = Self::find_language(&words)?;
@@ -237,12 +237,12 @@ impl MoneroMnemonic {
             }
             MoneroMnemonicWordCounts::TWELVE | MoneroMnemonicWordCounts::TWENTY_FOUR => &words,
             _ => {
-                return Err(MnemonicError::simple("Invalid Monero mnemonic length"));
+                return Err(MnemonicError::simple("Invalid mnemonic words"));
             }
         };
 
         if data_words.len() % 3 != 0 {
-            return Err(MnemonicError::simple("Invalid Monero mnemonic word count"));
+            return Err(MnemonicError::simple("Invalid mnemonic words"));
         }
 
         let mut entropy: Vec<u8> = Vec::new();

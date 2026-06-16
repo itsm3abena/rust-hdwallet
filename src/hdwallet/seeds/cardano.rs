@@ -172,10 +172,26 @@ impl CardanoSeed {
         }
 
         let entropy = BIP39Mnemonic::decode(&words)?;
-        let cbor_bytes = serde_cbor::to_vec(&entropy)
-            .map_err(|_| Error::new("CBOR encoding failed", None, None, None))?;
-
+        let cbor_bytes = Self::cbor_encode_bytes(&entropy)?;
         Ok(hex::encode(blake2b_256(&cbor_bytes)))
+    }
+
+    pub(crate) fn cbor_encode_bytes(bytes: &[u8]) -> Result<Vec<u8>, Error> {
+        // Match Python cbor2.dumps(bytes): definite-length CBOR byte string.
+        let mut out = Vec::with_capacity(1 + bytes.len());
+        if bytes.len() <= 23 {
+            out.push(0x40 + bytes.len() as u8);
+        } else if bytes.len() <= u8::MAX as usize {
+            out.push(0x58);
+            out.push(bytes.len() as u8);
+        } else if bytes.len() <= u16::MAX as usize {
+            out.push(0x59);
+            out.extend_from_slice(&(bytes.len() as u16).to_be_bytes());
+        } else {
+            return Err(Error::new("CBOR byte string too long", None, None, None));
+        }
+        out.extend_from_slice(bytes);
+        Ok(out)
     }
 
     pub fn generate_shelley_icarus(mnemonic: &str) -> Result<String, Error> {

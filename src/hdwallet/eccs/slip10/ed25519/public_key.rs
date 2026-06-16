@@ -27,6 +27,18 @@ impl<V: Ed25519Variant> Slip10Ed25519PublicKey<V> {
     pub fn encoded_point(&self) -> &[u8; COORD_BYTE_LEN] {
         &self.enc
     }
+
+    fn prefixed_raw(&self) -> Vec<u8> {
+        match V::public_key_prefix() {
+            Some(prefix) => {
+                let mut v = Vec::with_capacity(1 + COORD_BYTE_LEN);
+                v.push(prefix);
+                v.extend_from_slice(&self.enc);
+                v
+            }
+            None => self.enc.to_vec(),
+        }
+    }
 }
 
 impl<V: Ed25519Variant> IPublicKey for Slip10Ed25519PublicKey<V> {
@@ -37,7 +49,15 @@ impl<V: Ed25519Variant> IPublicKey for Slip10Ed25519PublicKey<V> {
     }
 
     fn from_bytes(bytes: &[u8]) -> Result<Self, EccsError> {
-        let body = if bytes.len() == COORD_BYTE_LEN + 1 && bytes[0] == Self::PREFIX {
+        let body = if let Some(prefix) = V::public_key_prefix() {
+            if bytes.len() == COORD_BYTE_LEN + 1 && bytes[0] == prefix {
+                &bytes[1..]
+            } else {
+                bytes
+            }
+        } else if bytes.len() == COORD_BYTE_LEN {
+            bytes
+        } else if bytes.len() == COORD_BYTE_LEN + 1 && bytes[0] == Self::PREFIX {
             &bytes[1..]
         } else {
             bytes
@@ -59,14 +79,11 @@ impl<V: Ed25519Variant> IPublicKey for Slip10Ed25519PublicKey<V> {
     }
 
     fn raw_compressed(&self) -> Vec<u8> {
-        let mut v = Vec::with_capacity(1 + COORD_BYTE_LEN);
-        v.push(Self::PREFIX);
-        v.extend_from_slice(&self.enc);
-        v
+        self.prefixed_raw()
     }
 
     fn raw_uncompressed(&self) -> Vec<u8> {
-        self.raw_compressed()
+        self.prefixed_raw()
     }
 
     fn point(&self) -> Slip10Ed25519Point<V> {
@@ -77,10 +94,12 @@ impl<V: Ed25519Variant> IPublicKey for Slip10Ed25519PublicKey<V> {
     }
 
     fn compressed_len() -> usize {
-        1 + COORD_BYTE_LEN
+        V::public_key_prefix()
+            .map(|_| 1 + COORD_BYTE_LEN)
+            .unwrap_or(COORD_BYTE_LEN)
     }
 
     fn uncompressed_len() -> usize {
-        1 + COORD_BYTE_LEN
+        Self::compressed_len()
     }
 }
