@@ -741,6 +741,12 @@ impl Ihd for CardanoHd {
         Some(self.index)
     }
 
+    fn indexes(&self) -> Option<Vec<u32>> {
+        self.path.as_ref().and_then(|path| {
+            crate::hdwallet::utils::path_to_indexes(path).ok()
+        })
+    }
+
     fn address(&self) -> Option<String> {
         self.encode_address().ok()
     }

@@ -1,9 +1,12 @@
+use hdwallet_rust::hdwallet::addresses::{
+    CardanoAddress, MoneroAddress, ADDRESS_TYPE_STANDARD,
+};
 use hdwallet_rust::hdwallet::addresses::iaddress::{DecodeKwargs, EncodeKwargs, EncodePublicKey, IAddress};
 use hdwallet_rust::hdwallet::consts::PublicKeyTypes;
 use serde_json::Value;
 
 use super::json_helpers::json_hex_prefix;
-use super::{json_str, TestData};
+use super::{get_bytes, json_str, TestData};
 
 pub fn assert_address_name<A: IAddress + Default>(data: &TestData, ecc_key: &str, address_key: &str) {
     let fixture = &data.addresses[ecc_key]["addresses"][address_key];
@@ -93,6 +96,7 @@ pub fn p2wpkh_kwargs(case: &Value, kind: &str) -> (EncodeKwargs<'static>, Decode
     encode.hrp = Some(match hrp.as_str() {
         "bc" => "bc",
         "tb" => "tb",
+        "atom" => "atom",
         other => panic!("unsupported hrp {other}"),
     });
     encode.public_key_type = Some(public_key_type(&json_str(&case["args"]["public_key_type"])));
@@ -135,9 +139,8 @@ pub fn filecoin_kwargs(case: &Value, kind: &str) -> (EncodeKwargs<'static>, Deco
     let address_type = json_str(&case["args"]["address_type"]);
     let mut encode = EncodeKwargs::default();
     encode.address_type = Some(match address_type.as_str() {
-        "f1" => "f1",
-        "f3" => "f3",
-        "f4" => "f4",
+        "secp256k1" => "secp256k1",
+        "bls" => "bls",
         other => panic!("unsupported filecoin address type {other}"),
     });
     encode.public_key_type = Some(public_key_type(&json_str(&case["args"]["public_key_type"])));
@@ -168,6 +171,7 @@ pub fn ergo_kwargs(case: &Value, kind: &str) -> (EncodeKwargs<'static>, DecodeKw
     let mut encode = EncodeKwargs::default();
     encode.address_type = Some(match address_type.as_str() {
         "P2PK" => "P2PK",
+        "p2pkh" => "p2pkh",
         other => panic!("unsupported ergo address type {other}"),
     });
     encode.network = Some(match network_type.as_str() {
@@ -191,9 +195,8 @@ pub fn avalanche_kwargs(case: &Value, kind: &str) -> (EncodeKwargs<'static>, Dec
     let address_type = json_str(&case["args"]["address_type"]);
     let mut encode = EncodeKwargs::default();
     encode.address_type = Some(match address_type.as_str() {
-        "X" => "X",
-        "P" => "P",
-        "C" => "C",
+        "p-chain" => "p-chain",
+        "x-chain" => "x-chain",
         other => panic!("unsupported avalanche address type {other}"),
     });
     encode.public_key_type = Some(public_key_type(&json_str(&case["args"]["public_key_type"])));
@@ -201,4 +204,140 @@ pub fn avalanche_kwargs(case: &Value, kind: &str) -> (EncodeKwargs<'static>, Dec
     decode.address_type = encode.address_type;
     let _ = kind;
     (encode, decode)
+}
+
+pub fn assert_cardano_address_name() {
+    assert_eq!(CardanoAddress::default().name(), "Cardano");
+}
+
+pub fn assert_cardano_byron_icarus(data: &TestData) {
+    let root = &data.addresses["Kholaw-Ed25519"];
+    let fixture = &root["addresses"]["byron-icarus"];
+    let public_key = json_str(&root["public-key"]);
+    let chain_code = get_bytes(json_str(&fixture["args"]["chain_code"]).as_str());
+    let scheme = CardanoAddress::default();
+
+    let mut encode = EncodeKwargs::default();
+    encode.encode_type = Some(CardanoAddress::ENCODE_BYRON_ICARUS);
+    encode.chain_code = Some(&chain_code);
+    let encoded = scheme
+        .encode(EncodePublicKey::Str(&public_key), &encode)
+        .expect("encode");
+    assert_eq!(encoded, json_str(&fixture["encode"]));
+
+    let mut decode = DecodeKwargs::default();
+    decode.decode_type = Some(CardanoAddress::ENCODE_BYRON_ICARUS);
+    let decoded = scheme
+        .decode(json_str(&fixture["encode"]).as_str(), &decode)
+        .expect("decode");
+    assert_eq!(decoded, json_str(&fixture["decode"]));
+}
+
+pub fn assert_cardano_byron_legacy(data: &TestData) {
+    let root = &data.addresses["Kholaw-Ed25519"];
+    let fixture = &root["addresses"]["byron-legacy"];
+    let public_key = json_str(&root["public-key"]);
+    let path = json_str(&fixture["args"]["path"]);
+    let path_key = get_bytes(json_str(&fixture["args"]["path_key"]).as_str());
+    let chain_code = get_bytes(json_str(&fixture["args"]["chain_code"]).as_str());
+    let scheme = CardanoAddress::default();
+
+    let mut encode = EncodeKwargs::default();
+    encode.encode_type = Some(CardanoAddress::ENCODE_BYRON_LEGACY);
+    encode.path = Some(path.as_str());
+    encode.path_key = Some(&path_key);
+    encode.chain_code = Some(&chain_code);
+    let encoded = scheme
+        .encode(EncodePublicKey::Str(&public_key), &encode)
+        .expect("encode");
+    assert_eq!(encoded, json_str(&fixture["encode"]));
+
+    let mut decode = DecodeKwargs::default();
+    decode.decode_type = Some(CardanoAddress::ENCODE_BYRON_LEGACY);
+    let decoded = scheme
+        .decode(json_str(&fixture["encode"]).as_str(), &decode)
+        .expect("decode");
+    assert_eq!(decoded, json_str(&fixture["decode"]));
+}
+
+pub fn assert_cardano_shelley_payment(data: &TestData) {
+    let root = &data.addresses["Kholaw-Ed25519"];
+    let fixture = &root["addresses"]["shelley"];
+    let public_key = json_str(&root["public-key"]);
+    let staking_public_key = get_bytes(json_str(&fixture["args"]["staking_public_key"]).as_str());
+    let network = json_str(&fixture["args"]["network"]);
+    let scheme = CardanoAddress::default();
+
+    let mut encode = EncodeKwargs::default();
+    encode.encode_type = Some(CardanoAddress::ENCODE_PAYMENT);
+    encode.staking_public_key = Some(&staking_public_key);
+    encode.network = Some(match network.as_str() {
+        "mainnet" => "mainnet",
+        other => panic!("unsupported cardano network {other}"),
+    });
+    let encoded = scheme
+        .encode(EncodePublicKey::Str(&public_key), &encode)
+        .expect("encode");
+    assert_eq!(encoded, json_str(&fixture["encode"]));
+
+    let mut decode = DecodeKwargs::default();
+    decode.decode_type = Some(CardanoAddress::ENCODE_PAYMENT);
+    decode.network = encode.network;
+    let decoded = scheme
+        .decode(json_str(&fixture["encode"]).as_str(), &decode)
+        .expect("decode");
+    assert_eq!(decoded, json_str(&fixture["decode"]));
+}
+
+pub fn assert_cardano_shelley_staking(data: &TestData) {
+    let root = &data.addresses["Kholaw-Ed25519"];
+    let fixture = &root["addresses"]["shelley-staking"];
+    let public_key = json_str(&root["public-key"]);
+    let network = json_str(&fixture["args"]["network"]);
+    let scheme = CardanoAddress::default();
+
+    let mut encode = EncodeKwargs::default();
+    encode.encode_type = Some(CardanoAddress::ENCODE_STAKING);
+    encode.network = Some(match network.as_str() {
+        "mainnet" => "mainnet",
+        other => panic!("unsupported cardano network {other}"),
+    });
+    let encoded = scheme
+        .encode(EncodePublicKey::Str(&public_key), &encode)
+        .expect("encode");
+    assert_eq!(encoded, json_str(&fixture["encode"]));
+
+    let mut decode = DecodeKwargs::default();
+    decode.decode_type = Some(CardanoAddress::ENCODE_STAKING);
+    decode.network = encode.network;
+    let decoded = scheme
+        .decode(json_str(&fixture["encode"]).as_str(), &decode)
+        .expect("decode");
+    assert_eq!(decoded, json_str(&fixture["decode"]));
+}
+
+pub fn assert_monero_address(data: &TestData) {
+    let fixture = &data.addresses["SLIP10-Ed25519-Monero"];
+    assert_eq!(MoneroAddress::default().name(), json_str(&fixture["name"]));
+    let spend_public_key = json_str(&fixture["spend-public-key"]);
+    let view_public_key = json_str(&fixture["view-public-key"]);
+    let payment_id = fixture["args"]["payment_id"].as_str().map(|value| get_bytes(value));
+    let encoded = MoneroAddress::encode(
+        hdwallet_rust::hdwallet::eccs::PublicKeyInput::Hex(&spend_public_key),
+        hdwallet_rust::hdwallet::eccs::PublicKeyInput::Hex(&view_public_key),
+        "mainnet",
+        ADDRESS_TYPE_STANDARD,
+        payment_id.as_deref(),
+    )
+    .expect("encode");
+    assert_eq!(encoded, json_str(&fixture["encode"]));
+    let (spend, view) = MoneroAddress::decode(
+        json_str(&fixture["encode"]).as_str(),
+        "mainnet",
+        ADDRESS_TYPE_STANDARD,
+        payment_id.as_deref(),
+    )
+    .expect("decode");
+    assert_eq!(spend, spend_public_key);
+    assert_eq!(view, view_public_key);
 }

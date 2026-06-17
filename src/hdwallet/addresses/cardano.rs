@@ -371,7 +371,12 @@ impl CardanoAddress {
         let mut out = root_hash.clone();
         if let Some((_, Value::Bytes(enc))) = attrs.iter().find(|(k, _)| matches!(k, Value::Integer(i) if *i == 1.into()))
         {
-            out.extend_from_slice(enc);
+            let attr: Value = serde_cbor::from_slice(enc)
+                .map_err(|_| AddressSchemeError::Msg("Invalid address attributes".into()))?;
+            let Value::Bytes(inner) = attr else {
+                return Err(AddressSchemeError::Msg("Invalid address attributes".into()));
+            };
+            out.extend_from_slice(&inner);
         }
         Ok(hex::encode(out))
     }

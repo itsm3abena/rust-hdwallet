@@ -718,4 +718,8 @@ impl Ihd for Bip32Hd {
             crate::hdwallet::utils::path_to_indexes(path).ok()
         })
     }
+
+    fn index(&self) -> Option<u32> {
+        self.indexes().and_then(|indexes| indexes.last().copied())
+    }
 }

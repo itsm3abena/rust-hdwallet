@@ -4,7 +4,7 @@ use crate::hdwallet::eccs::{
 };
 use crate::hdwallet::exceptions::PublicKeyError;
 use crate::hdwallet::libs::ecc::sha256;
-use crate::hdwallet::libs::segwit_bech32::{base_bech32_decode, bech32_encode, convertbits};
+use crate::hdwallet::libs::bech32::{base_bech32_decode, bech32_encode_raw, convert_bits as convertbits};
 
 use super::iaddress::{
     AddressSchemeError, DecodeKwargs, EncodeKwargs, EncodePublicKey, IAddress,
@@ -34,7 +34,7 @@ impl ZilliqaAddress {
     }
 
     fn encode_bech32(hrp: &str, public_key_hash: &[u8; HASH_LEN]) -> Result<String, AddressSchemeError> {
-        bech32_encode(hrp, public_key_hash).ok_or_else(|| {
+        bech32_encode_raw(hrp, public_key_hash).ok_or_else(|| {
             AddressSchemeError::Msg(format!("failed to bech32-encode {hrp} address"))
         })
     }

@@ -3,7 +3,7 @@ use crate::hdwallet::eccs::{
     validate_and_get_public_key, IPublicKey, PublicKeyInput, Slip10Ed25519PublicKeyStd,
 };
 use crate::hdwallet::exceptions::PublicKeyError;
-use crate::hdwallet::libs::segwit_bech32::{base_bech32_decode, bech32_encode, convertbits};
+use crate::hdwallet::libs::bech32::{base_bech32_decode, bech32_encode_raw, convert_bits as convertbits};
 
 use super::iaddress::{
     AddressSchemeError, DecodeKwargs, EncodeKwargs, EncodePublicKey, IAddress,
@@ -45,7 +45,7 @@ impl MultiversXAddress {
     }
 
     fn encode_bech32(hrp: &str, body: &[u8; PUBKEY_BODY_LEN]) -> Result<String, AddressSchemeError> {
-        bech32_encode(hrp, body).ok_or_else(|| {
+        bech32_encode_raw(hrp, body).ok_or_else(|| {
             AddressSchemeError::Msg(format!("failed to bech32-encode {hrp} address"))
         })
     }

@@ -1,6 +1,6 @@
 use crate::hdwallet::cryptocurrencies::oktchain::Mainnet as OktChainMainnet;
 use crate::hdwallet::eccs::{PublicKeyInput, Slip10Secp256k1PublicKey};
-use crate::hdwallet::libs::segwit_bech32::{base_bech32_decode, bech32_encode, convertbits};
+use crate::hdwallet::libs::bech32::{base_bech32_decode, bech32_encode_raw, convert_bits as convertbits};
 
 use super::ethereum::EthereumAddress;
 use super::iaddress::{
@@ -15,7 +15,7 @@ pub(crate) fn encode_bech32_eth_address(
     let eth_address = EthereumAddress::encode_public_key(public_key, true)?;
     let hash_bytes = hex::decode(&eth_address[2..]).map_err(|e| AddressSchemeError::Msg(e.to_string()))?;
     let hrp = kwargs.hrp.unwrap_or(default_hrp);
-    bech32_encode(hrp, &hash_bytes).ok_or_else(|| {
+    bech32_encode_raw(hrp, &hash_bytes).ok_or_else(|| {
         AddressSchemeError::Msg(format!("failed to bech32-encode {hrp} address"))
     })
 }

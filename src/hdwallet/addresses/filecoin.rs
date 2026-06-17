@@ -4,7 +4,7 @@ use crate::hdwallet::eccs::{
 };
 use crate::hdwallet::exceptions::PublicKeyError;
 use crate::hdwallet::libs::base32::{self, Base32Error};
-use crate::hdwallet::utils::{blake2b_160, blake2b_256, integer_to_bytes_python};
+use crate::hdwallet::utils::{blake2b_160, blake2b_32, integer_to_bytes_python};
 
 use super::iaddress::{
     AddressSchemeError, DecodeKwargs, EncodeKwargs, EncodePublicKey, IAddress,
@@ -61,9 +61,7 @@ impl FilecoinAddress {
     fn compute_checksum(public_key_hash: &[u8], address_type: u8) -> [u8; CHECKSUM_LEN] {
         let mut payload = integer_to_bytes_python(u32::from(address_type), None);
         payload.extend_from_slice(public_key_hash);
-        blake2b_256(&payload)[..CHECKSUM_LEN]
-            .try_into()
-            .expect("checksum length")
+        blake2b_32(&payload)
     }
 
     fn type_char(address_type: u8) -> Result<char, AddressSchemeError> {

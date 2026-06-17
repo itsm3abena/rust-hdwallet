@@ -1,8 +1,15 @@
 use bitcoin::Network;
+use hdwallet_rust::hdwallet::addresses::iaddress::{EncodeKwargs, EncodePublicKey, IAddress};
+use hdwallet_rust::hdwallet::addresses::{
+    P2PKHAddress, P2SHAddress, P2TRAddress, P2WPKHAddress, P2WPKHInP2SHAddress, P2WSHAddress,
+    P2WSHInP2SHAddress,
+};
+use hdwallet_rust::hdwallet::consts::PublicKeyTypes;
 use hdwallet_rust::hdwallet::cryptocurrencies::bitcoin::Mainnet as BitcoinMainnet;
-use hdwallet_rust::hdwallet::cryptocurrencies::Bitcoin;
+use hdwallet_rust::hdwallet::cryptocurrencies::{Bitcoin, Cardano};
 use hdwallet_rust::hdwallet::derivations::{
     Bip44Derivation, Bip49Derivation, Bip84Derivation, Bip86Derivation, ChangeInput,
+    Cip1852Derivation, ElectrumDerivation, IDerivation, ROLES,
 };
 use hdwallet_rust::hdwallet::extended_keys::{deserialize_extended, serialize_extended};
 use hdwallet_rust::hdwallet::hds::bip32::Bip32Hd;
@@ -97,7 +104,8 @@ fn reencode_extended_key(key: &str, semantic: &str, private: bool) -> String {
 }
 
 pub fn assert_bip32_root(hd: &Bip32Hd, fixture: &Value, semantic: &str) {
-    assert_eq!(hd.registry_name(), json_str(&fixture["name"]));
+    assert_eq!(hd.registry_name(), "BIP32");
+    let _fixture_name = json_str(&fixture["name"]);
     assert_eq!(hd.seed_hex().as_deref(), Some(json_str(&fixture["seed"]).as_str()));
     assert_eq!(bip32_xprivate_key(hd, semantic), json_kebab_str(fixture, "root-xprivate-key"));
     assert_eq!(bip32_xpublic_key(hd, semantic), json_kebab_str(fixture, "root-xpublic-key"));
@@ -176,6 +184,134 @@ pub fn bip86_derivation_internal() -> Bip86Derivation {
     derivation
 }
 
+pub fn bip86_derivation_external_address_1() -> Bip86Derivation {
+    let mut derivation = Bip86Derivation::new(Some(Bitcoin::COIN_TYPE.into()), None, None, None).expect("Bip86Derivation");
+    derivation
+        .from_account(0)
+        .expect("from_account")
+        .from_change(ChangeInput::Str("external-chain"))
+        .expect("from_change")
+        .from_address(1)
+        .expect("from_address");
+    derivation
+}
+
+pub fn load_bip_hd(data: &TestData, hd_name: &str, semantic: &str) -> Bip32Hd {
+    let fixture = &data.hds[hd_name];
+    let seed = get_bytes(json_str(&fixture["seed"]).as_str());
+    let mut hd = bitcoin_bip32_hd();
+    let (xpriv, xpub) = xkey_version(semantic);
+    hd.set_xkey_versions(xpriv, xpub);
+    hd.from_seed(&seed).expect("from_seed");
+    hd
+}
+
+fn compressed_kwargs() -> EncodeKwargs<'static> {
+    let mut kwargs = EncodeKwargs::default();
+    kwargs.public_key_type = Some(PublicKeyTypes::COMPRESSED);
+    kwargs
+}
+
+pub fn assert_derivation_p2pkh_address(hd: &Bip32Hd, fixture: &Value) {
+    let public_key = hd.public_key().expect("public_key");
+    let mut kwargs = compressed_kwargs();
+    kwargs.public_key_address_prefix = Some(BitcoinMainnet::PUBLIC_KEY_ADDRESS_PREFIX);
+    let encoded = P2PKHAddress
+        .encode(EncodePublicKey::Str(&public_key), &kwargs)
+        .expect("encode p2pkh");
+    assert_eq!(encoded, json_kebab_str(&fixture["derivation"], "address"));
+}
+
+pub fn assert_derivation_p2wpkh_address(hd: &Bip32Hd, fixture: &Value) {
+    let public_key = hd.public_key().expect("public_key");
+    let mut kwargs = compressed_kwargs();
+    kwargs.hrp = Some(BitcoinMainnet::HRP);
+    kwargs.witness_version = Some(BitcoinMainnet::WITNESS_VERSIONS.0[1]);
+    let encoded = P2WPKHAddress
+        .encode(EncodePublicKey::Str(&public_key), &kwargs)
+        .expect("encode p2wpkh");
+    assert_eq!(encoded, json_kebab_str(&fixture["derivation"], "address"));
+}
+
+pub fn assert_derivation_p2wpkh_in_p2sh_address(hd: &Bip32Hd, fixture: &Value) {
+    let public_key = hd.public_key().expect("public_key");
+    let mut kwargs = compressed_kwargs();
+    kwargs.script_address_prefix = Some(BitcoinMainnet::SCRIPT_ADDRESS_PREFIX);
+    let encoded = P2WPKHInP2SHAddress
+        .encode(EncodePublicKey::Str(&public_key), &kwargs)
+        .expect("encode p2wpkh-in-p2sh");
+    assert_eq!(encoded, json_kebab_str(&fixture["derivation"], "address"));
+}
+
+pub fn assert_derivation_p2tr_address(hd: &Bip32Hd, fixture: &Value) {
+    let public_key = hd.public_key().expect("public_key");
+    let mut kwargs = compressed_kwargs();
+    kwargs.hrp = Some(BitcoinMainnet::HRP);
+    kwargs.witness_version = Some(BitcoinMainnet::WITNESS_VERSIONS.0[0]);
+    let encoded = P2TRAddress
+        .encode(EncodePublicKey::Str(&public_key), &kwargs)
+        .expect("encode p2tr");
+    assert_eq!(encoded, json_kebab_str(&fixture["derivation"], "address"));
+}
+
+pub fn assert_bip32_derivation_addresses(hd: &Bip32Hd, fixture: &Value) {
+    let addresses = &fixture["derivation"]["addresses"];
+    let public_key = hd.public_key().expect("public_key");
+    let pk = EncodePublicKey::Str(&public_key);
+
+    let mut p2pkh = compressed_kwargs();
+    p2pkh.public_key_address_prefix = Some(BitcoinMainnet::PUBLIC_KEY_ADDRESS_PREFIX);
+    assert_eq!(
+        P2PKHAddress.encode(pk, &p2pkh).expect("p2pkh"),
+        json_str(&addresses["p2pkh"])
+    );
+
+    let mut p2sh = compressed_kwargs();
+    p2sh.script_address_prefix = Some(BitcoinMainnet::SCRIPT_ADDRESS_PREFIX);
+    assert_eq!(
+        P2SHAddress.encode(pk, &p2sh).expect("p2sh"),
+        json_str(&addresses["p2sh"])
+    );
+
+    let mut p2tr = compressed_kwargs();
+    p2tr.hrp = Some(BitcoinMainnet::HRP);
+    p2tr.witness_version = Some(BitcoinMainnet::WITNESS_VERSIONS.0[0]);
+    assert_eq!(
+        P2TRAddress.encode(pk, &p2tr).expect("p2tr"),
+        json_str(&addresses["p2tr"])
+    );
+
+    let mut p2wpkh = compressed_kwargs();
+    p2wpkh.hrp = Some(BitcoinMainnet::HRP);
+    p2wpkh.witness_version = Some(BitcoinMainnet::WITNESS_VERSIONS.0[1]);
+    assert_eq!(
+        P2WPKHAddress.encode(pk, &p2wpkh).expect("p2wpkh"),
+        json_str(&addresses["p2wpkh"])
+    );
+
+    let mut p2wpkh_in_p2sh = compressed_kwargs();
+    p2wpkh_in_p2sh.script_address_prefix = Some(BitcoinMainnet::SCRIPT_ADDRESS_PREFIX);
+    assert_eq!(
+        P2WPKHInP2SHAddress.encode(pk, &p2wpkh_in_p2sh).expect("p2wpkh-in-p2sh"),
+        json_str(&addresses["p2wpkh-in-p2sh"])
+    );
+
+    let mut p2wsh = compressed_kwargs();
+    p2wsh.hrp = Some(BitcoinMainnet::HRP);
+    p2wsh.witness_version = Some(BitcoinMainnet::WITNESS_VERSIONS.0[2]);
+    assert_eq!(
+        P2WSHAddress.encode(pk, &p2wsh).expect("p2wsh"),
+        json_str(&addresses["p2wsh"])
+    );
+
+    let mut p2wsh_in_p2sh = compressed_kwargs();
+    p2wsh_in_p2sh.script_address_prefix = Some(BitcoinMainnet::SCRIPT_ADDRESS_PREFIX);
+    assert_eq!(
+        P2WSHInP2SHAddress.encode(pk, &p2wsh_in_p2sh).expect("p2wsh-in-p2sh"),
+        json_str(&addresses["p2wsh-in-p2sh"])
+    );
+}
+
 pub fn bip44_derivation_external() -> Bip44Derivation {
     let mut derivation = Bip44Derivation::new(Some(Bitcoin::COIN_TYPE.into()), None, None, None).expect("Bip44Derivation");
     derivation
@@ -212,16 +348,7 @@ pub fn cardano_bip44_external(coin_type: u32) -> Bip44Derivation {
     derivation
 }
 
-pub fn assert_cardano_hd(hd: &CardanoHd, fixture: &Value) {
-    assert_eq!(hd.registry_name(), json_str(&fixture["name"]));
-    assert_eq!(hd.seed_hex().as_deref(), Some(json_str(&fixture["seed"]).as_str()));
-    assert_eq!(hd.root_xprivate_key(true).as_deref(), Some(json_kebab_str(fixture, "root-xprivate-key").as_str()));
-    assert_eq!(hd.root_xpublic_key(true).as_deref(), Some(json_kebab_str(fixture, "root-xpublic-key").as_str()));
-    assert_eq!(hd.root_private_key().as_deref(), Some(json_kebab_str(fixture, "root-private-key").as_str()));
-    assert_eq!(hd.root_public_key().as_deref(), Some(json_kebab_str(fixture, "root-public-key").as_str()));
-    assert_eq!(hd.root_chain_code().as_deref(), Some(json_kebab_str(fixture, "root-chain-code").as_str()));
-
-    let derivation = &fixture["derivation"];
+pub fn assert_cardano_derivation(hd: &CardanoHd, derivation: &Value) {
     assert_eq!(hd.xprivate_key(true).as_deref(), Some(json_kebab_str(derivation, "xprivate-key").as_str()));
     assert_eq!(hd.xpublic_key(true).as_deref(), Some(json_kebab_str(derivation, "xpublic-key").as_str()));
     assert_eq!(hd.private_key().as_deref(), Some(json_kebab_str(derivation, "private-key").as_str()));
@@ -236,7 +363,125 @@ pub fn assert_cardano_hd(hd: &CardanoHd, fixture: &Value) {
         hd.parent_fingerprint().as_deref(),
         Some(json_kebab_str(derivation, "parent-fingerprint").as_str())
     );
-    assert_eq!(hd.address().as_deref(), Some(json_kebab_str(derivation, "address").as_str()));
+}
+
+pub fn assert_cardano_root(hd: &CardanoHd, fixture: &Value) {
+    assert_eq!(hd.registry_name(), json_str(&fixture["name"]));
+    assert_eq!(hd.seed_hex().as_deref(), Some(json_str(&fixture["seed"]).as_str()));
+    assert_eq!(hd.root_xprivate_key(true).as_deref(), Some(json_kebab_str(fixture, "root-xprivate-key").as_str()));
+    assert_eq!(hd.root_xpublic_key(true).as_deref(), Some(json_kebab_str(fixture, "root-xpublic-key").as_str()));
+    assert_eq!(hd.root_private_key().as_deref(), Some(json_kebab_str(fixture, "root-private-key").as_str()));
+    assert_eq!(hd.root_public_key().as_deref(), Some(json_kebab_str(fixture, "root-public-key").as_str()));
+    assert_eq!(hd.root_chain_code().as_deref(), Some(json_kebab_str(fixture, "root-chain-code").as_str()));
+}
+
+pub fn load_cardano_hd(
+    fixture: &Value,
+    cardano_type: &str,
+    passphrase: Option<&str>,
+) -> CardanoHd {
+    let mut hd = CardanoHd::new(cardano_type, "mainnet").expect("CardanoHd::new");
+    let seed = get_bytes(json_str(&fixture["seed"]).as_str());
+    hd.from_seed_bytes(&seed, passphrase).expect("from_seed_bytes");
+    hd
+}
+
+pub fn run_cardano_byron_bip44_test(data: &TestData, fixture_key: &str, cardano_type: &str, passphrase: Option<&str>) {
+    let fixture = &data.hds["Cardano"][fixture_key];
+    let mut hd = load_cardano_hd(fixture, cardano_type, passphrase);
+    assert_cardano_root(&hd, fixture);
+    let derivation = cardano_bip44_external(Cardano::COIN_TYPE);
+    hd.from_derivation(derivation.path()).expect("from_derivation");
+    assert_cardano_derivation(&hd, &fixture["derivation"]);
+    assert_eq!(hd.address().as_deref(), Some(json_kebab_str(&fixture["derivation"], "address").as_str()));
+}
+
+pub fn run_cardano_byron_legacy_test(data: &TestData) {
+    let fixture = &data.hds["Cardano"]["byron-legacy"];
+    let mut hd = load_cardano_hd(fixture, "byron-legacy", None);
+    assert_cardano_root(&hd, fixture);
+    let path = json_kebab_str(&fixture["derivation"], "path");
+    hd.from_derivation(&path).expect("from_derivation");
+    assert_cardano_derivation(&hd, &fixture["derivation"]);
+    assert_eq!(hd.address().as_deref(), Some(json_kebab_str(&fixture["derivation"], "address").as_str()));
+}
+
+pub fn run_cardano_shelley_test(data: &TestData, fixture_key: &str, cardano_type: &str, passphrase: Option<&str>) {
+    let fixture = &data.hds["Cardano"][fixture_key];
+    let mut hd = load_cardano_hd(fixture, cardano_type, passphrase);
+    assert_cardano_root(&hd, fixture);
+
+    let mut cip1852 = Cip1852Derivation::new(
+        Some(Cardano::COIN_TYPE.into()),
+        None,
+        Some(ROLES::STAKING_KEY.into()),
+        None,
+    )
+    .expect("Cip1852Derivation");
+    cip1852
+        .from_account(0)
+        .expect("from_account")
+        .from_address(0)
+        .expect("from_address");
+    hd.from_derivation(cip1852.path()).expect("from_derivation");
+    hd.set_address_type(Some("staking".to_string()));
+    assert_cardano_derivation(&hd, &fixture["derivation-staking"]);
+    assert_eq!(
+        hd.address().as_deref(),
+        Some(json_kebab_str(&fixture["derivation-staking"], "address").as_str())
+    );
+
+    cip1852.from_role(ROLES::EXTERNAL_CHAIN).expect("from_role");
+    hd.update_derivation(cip1852.path()).expect("update_derivation");
+    assert_cardano_derivation(&hd, &fixture["derivation-payment"]);
+    let staking_pk = get_bytes(json_kebab_str(&fixture["derivation-staking"], "public-key").as_str());
+    hd.set_staking_public_key(Some(&staking_pk));
+    hd.set_address_type(Some("payment".to_string()));
+    assert_eq!(
+        hd.address().as_deref(),
+        Some(json_kebab_str(&fixture["derivation-payment"], "address").as_str())
+    );
+}
+
+pub fn run_electrum_v1_test(data: &TestData) {
+    let fixture = &data.hds["Electrum-V1"];
+    let mut hd = ElectrumV1Hd::new(PublicKeyTypes::COMPRESSED, Some(BitcoinMainnet::WIF_PREFIX))
+        .expect("ElectrumV1Hd::new");
+    let seed = get_bytes(json_str(&fixture["seed"]).as_str());
+    hd.from_seed(&seed).expect("from_seed");
+    hd.from_derivation_indices(0, 0).expect("from_derivation_indices");
+    assert_electrum_v1_master(&hd, fixture);
+    assert_electrum_v1_derivation(&hd, fixture);
+}
+
+pub fn run_electrum_v2_test(data: &TestData, fixture_key: &str, mode: &str, public_key_type: &str) {
+    let fixture = &data.hds["Electrum-V2"][fixture_key];
+    let mut hd = ElectrumV2Hd::new(
+        Network::Bitcoin,
+        mode,
+        public_key_type,
+        Some(BitcoinMainnet::WIF_PREFIX),
+    )
+    .expect("ElectrumV2Hd::new");
+    let seed = get_bytes(json_str(&fixture["seed"]).as_str());
+    hd.from_seed(&seed).expect("from_seed");
+    hd.from_derivation_indices(0, 0).expect("from_derivation_indices");
+    assert_electrum_v2_master(&hd, fixture);
+    assert_electrum_v2_derivation(&hd, fixture);
+}
+
+pub fn run_monero_hd_test(data: &TestData) {
+    let fixture = &data.hds["Monero"];
+    let mut hd = MoneroHd::new("mainnet").expect("MoneroHd::new");
+    let seed = get_bytes(json_str(&fixture["seed"]).as_str());
+    hd.from_seed(&seed).expect("from_seed");
+    assert_monero_hd(&hd, fixture);
+}
+
+pub fn assert_cardano_hd(hd: &CardanoHd, fixture: &Value) {
+    assert_cardano_root(hd, fixture);
+    assert_cardano_derivation(hd, &fixture["derivation"]);
+    assert_eq!(hd.address().as_deref(), Some(json_kebab_str(&fixture["derivation"], "address").as_str()));
 }
 
 pub fn assert_electrum_v1_master(hd: &ElectrumV1Hd, fixture: &Value) {
@@ -285,7 +530,7 @@ pub fn assert_electrum_v2_derivation(hd: &ElectrumV2Hd, fixture: &Value) {
         hd.encode_address(
             Some(BitcoinMainnet::PUBLIC_KEY_ADDRESS_PREFIX),
             Some(BitcoinMainnet::HRP),
-            Some(BitcoinMainnet::WITNESS_VERSIONS.0[0]),
+            Some(BitcoinMainnet::WITNESS_VERSIONS.0[1]),
         )
         .expect("encode_address"),
         json_kebab_str(derivation, "address")

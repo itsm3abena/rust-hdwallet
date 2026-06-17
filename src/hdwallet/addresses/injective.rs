@@ -3,7 +3,7 @@ use crate::hdwallet::eccs::{
     validate_and_get_public_key, PublicKeyInput, Slip10Secp256k1PublicKey,
 };
 use crate::hdwallet::exceptions::PublicKeyError;
-use crate::hdwallet::libs::segwit_bech32::{base_bech32_decode, bech32_encode, convertbits};
+use crate::hdwallet::libs::bech32::{base_bech32_decode, bech32_encode_raw, convert_bits as convertbits};
 
 use super::ethereum::EthereumAddress;
 use super::iaddress::{
@@ -48,7 +48,7 @@ impl InjectiveAddress {
             .map_err(|e: PublicKeyError| AddressSchemeError::Msg(e.to_string()))?;
         let hash_bytes = Self::eth_hash_bytes(PublicKeyInput::Instance(pk))?;
         let hrp = Self::hrp(kwargs);
-        bech32_encode(hrp, &hash_bytes).ok_or_else(|| {
+        bech32_encode_raw(hrp, &hash_bytes).ok_or_else(|| {
             AddressSchemeError::Msg(format!("failed to bech32-encode {hrp} address"))
         })
     }

@@ -385,6 +385,12 @@ pub fn blake2b_256(data: &[u8]) -> [u8; 32] {
     Blake2b::<U32>::digest(data).into()
 }
 
+pub fn blake2b_32(data: &[u8]) -> [u8; 4] {
+    use blake2::digest::{consts::U4, Digest};
+    use blake2::Blake2b;
+    Blake2b::<U4>::digest(data).into()
+}
+
 pub fn blake2b_160(data: &[u8]) -> [u8; 20] {
     use blake2::digest::{consts::U20, Digest};
     use blake2::Blake2b;
