@@ -10,6 +10,7 @@ authors = ["Abenezer L. <itsm3abena@gmail.com>"]
 keywords = ["hdwallet", "bip32", "bip39", "cryptocurrency", "wallet"]
 categories = ["cryptography", "command-line-utilities"]
 rust-version = "1.85"
+exclude = [".github/**"]
 
 [lib]
 name = "hdwallet_rust"
