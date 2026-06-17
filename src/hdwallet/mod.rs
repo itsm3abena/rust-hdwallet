@@ -13,6 +13,7 @@ pub mod cryptocurrencies;
 pub mod addresses;
 pub mod cli;
 pub mod consts;
+pub mod crypto;
 pub mod derivations;
 pub mod entropies;
 pub mod mnemonics;
