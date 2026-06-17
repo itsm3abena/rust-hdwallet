@@ -1,7 +1,7 @@
 // src/info.rs
 
 pub const __NAME__: &str = "hdwallet-rust";
-pub const __VERSION__: &str = "0.1.0";
+pub const __VERSION__: &str = "0.1.0-beta";
 pub const __LICENSE__: &str = "MIT";
 pub const __AUTHOR__: &str = "Abenezer Lulseged Wube";
 pub const __EMAIL__: &str = "itsm3abena@gmail.com";
