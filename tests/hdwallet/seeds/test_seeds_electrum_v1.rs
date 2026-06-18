@@ -1,5 +1,5 @@
 use super::conftest::{json_str, TestData};
-use hdwallet_rust::hdwallet::seeds::ElectrumV1Seed;
+use rust_hdwallet::hdwallet::seeds::ElectrumV1Seed;
 
 #[test]
 fn test_electrum_v1_seeds() {

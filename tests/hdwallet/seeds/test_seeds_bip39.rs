@@ -1,5 +1,5 @@
 use super::conftest::{json_str, TestData};
-use hdwallet_rust::hdwallet::seeds::BIP39Seed;
+use rust_hdwallet::hdwallet::seeds::BIP39Seed;
 
 #[test]
 fn test_bip39_seeds() {

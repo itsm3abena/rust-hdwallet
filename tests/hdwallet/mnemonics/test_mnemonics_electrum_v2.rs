@@ -1,6 +1,6 @@
 use super::conftest::{assert_error_contains, json_str, json_usize, TestData};
-use hdwallet_rust::hdwallet::exceptions::EntropyError;
-use hdwallet_rust::hdwallet::mnemonics::{
+use rust_hdwallet::hdwallet::exceptions::EntropyError;
+use rust_hdwallet::hdwallet::mnemonics::{
     electrum::{
         ElectrumV2MnemonicLanguages, ElectrumV2MnemonicTypes, ElectrumV2MnemonicWordCounts,
     },

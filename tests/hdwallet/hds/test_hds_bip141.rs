@@ -2,7 +2,7 @@ use super::conftest::{
     assert_bip32_derivation, assert_bip32_root, assert_derivation_p2wpkh_address, load_bip_hd,
     json_kebab_str, TestData,
 };
-use hdwallet_rust::hdwallet::hds::ihd::Ihd;
+use rust_hdwallet::hdwallet::hds::ihd::Ihd;
 
 #[test]
 fn test_bip141_hd() {

@@ -1,8 +1,8 @@
-use hdwallet_rust::hdwallet::addresses::{
+use rust_hdwallet::hdwallet::addresses::{
     CardanoAddress, MoneroAddress, ADDRESS_TYPE_STANDARD,
 };
-use hdwallet_rust::hdwallet::addresses::iaddress::{DecodeKwargs, EncodeKwargs, EncodePublicKey, IAddress};
-use hdwallet_rust::hdwallet::consts::PublicKeyTypes;
+use rust_hdwallet::hdwallet::addresses::iaddress::{DecodeKwargs, EncodeKwargs, EncodePublicKey, IAddress};
+use rust_hdwallet::hdwallet::consts::PublicKeyTypes;
 use serde_json::Value;
 
 use super::json_helpers::json_hex_prefix;
@@ -323,8 +323,8 @@ pub fn assert_monero_address(data: &TestData) {
     let view_public_key = json_str(&fixture["view-public-key"]);
     let payment_id = fixture["args"]["payment_id"].as_str().map(|value| get_bytes(value));
     let encoded = MoneroAddress::encode(
-        hdwallet_rust::hdwallet::eccs::PublicKeyInput::Hex(&spend_public_key),
-        hdwallet_rust::hdwallet::eccs::PublicKeyInput::Hex(&view_public_key),
+        rust_hdwallet::hdwallet::eccs::PublicKeyInput::Hex(&spend_public_key),
+        rust_hdwallet::hdwallet::eccs::PublicKeyInput::Hex(&view_public_key),
         "mainnet",
         ADDRESS_TYPE_STANDARD,
         payment_id.as_deref(),

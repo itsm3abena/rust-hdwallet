@@ -5,7 +5,7 @@
 
 Rust implementation of a Hierarchical Deterministic (HD) Wallet generator for **200+ cryptocurrencies**.
 
-> **Beta notice:** This project is in active beta testing. APIs, CLI flags, and behavior may change between releases. If you find bugs or compatibility issues, please [open an issue](https://github.com/itsm3abena/hdwallet-rust/issues) or help us fix them — see [CONTRIBUTING.md](CONTRIBUTING.md).
+> **Beta notice:** This project is in active beta testing. APIs, CLI flags, and behavior may change between releases. If you find bugs or compatibility issues, please [open an issue](https://github.com/itsm3abena/rust-hdwallet/issues) or help us fix them — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 This library is a Rust port inspired by the excellent [python-hdwallet](https://github.com/hdwallet-io/python-hdwallet) project. It offers a flexible and scalable solution for developers integrating multi-currency wallet functionality: secure seed generation, robust key management, and streamlined account control across many blockchains.
 
@@ -27,20 +27,29 @@ Add the library to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-hdwallet-rust = { git = "https://github.com/itsm3abena/hdwallet-rust" }
+rust-hdwallet = "0.1.0-beta"
+```
+
+Or install from GitHub:
+
+```toml
+[dependencies]
+rust-hdwallet = { git = "https://github.com/itsm3abena/rust-hdwallet" }
 ```
 
 Or clone and build locally:
 
 ```bash
-git clone https://github.com/itsm3abena/hdwallet-rust.git
-cd hdwallet-rust
+git clone https://github.com/itsm3abena/rust-hdwallet.git
+cd rust-hdwallet
 cargo build --release
 ```
 
 The CLI binary is named `hdwallet`:
 
 ```bash
+cargo install rust-hdwallet --version 0.1.0-beta
+# or from a local clone:
 cargo install --path .
 # or
 cargo run --bin hdwallet -- --help
@@ -57,9 +66,9 @@ A simple Bitcoin HD wallet generator:
 ```rust
 use std::collections::HashSet;
 
-use hdwallet_rust::hdwallet::consts::PublicKeyTypes;
-use hdwallet_rust::hdwallet::derivations::CustomDerivation;
-use hdwallet_rust::hdwallet::hdwallet::{HDWallet, HDWalletConfig};
+use rust_hdwallet::hdwallet::consts::PublicKeyTypes;
+use rust_hdwallet::hdwallet::derivations::CustomDerivation;
+use rust_hdwallet::hdwallet::hdwallet::{HDWallet, HDWalletConfig};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut wallet = HDWallet::new(HDWalletConfig {
@@ -140,8 +149,8 @@ Run `hdwallet --help` or `hdwallet dump --help` for the full option list.
 Fork the repository, clone it locally, and build:
 
 ```bash
-git clone https://github.com/itsm3abena/hdwallet-rust.git
-cd hdwallet-rust
+git clone https://github.com/itsm3abena/rust-hdwallet.git
+cd rust-hdwallet
 cargo build
 ```
 
@@ -163,7 +172,7 @@ cargo test --test hdwallet_hdwallet_bip44
 
 We welcome bug reports, feature requests, documentation improvements, and pull requests — especially during this beta phase.
 
-- Open an [issue](https://github.com/itsm3abena/hdwallet-rust/issues) to report bugs or discuss changes before large PRs.
+- Open an [issue](https://github.com/itsm3abena/rust-hdwallet/issues) to report bugs or discuss changes before large PRs.
 - See [CONTRIBUTING.md](CONTRIBUTING.md) for setup steps, coding guidelines, and the pull request workflow.
 - Help with testing against real wallets, adding cryptocurrency coverage, and improving docs is highly appreciated.
 

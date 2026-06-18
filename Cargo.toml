@@ -1,11 +1,11 @@
 [package]
-name = "hdwallet-rust"
+name = "rust-hdwallet"
 version = "0.1.0-beta"
 edition = "2024"
 description = "Hierarchical deterministic wallet library for deriving cryptocurrency keys, addresses, and mnemonics."
 license = "MIT"
 readme = "README.md"
-repository = "https://github.com/itsm3abena/hdwallet-rust"
+repository = "https://github.com/itsm3abena/rust-hdwallet"
 authors = ["Abenezer L. <itsm3abena@gmail.com>"]
 keywords = ["hdwallet", "bip32", "bip39", "cryptocurrency", "wallet"]
 categories = ["cryptography", "command-line-utilities"]
@@ -13,7 +13,7 @@ rust-version = "1.85"
 exclude = [".github/**"]
 
 [lib]
-name = "hdwallet_rust"
+name = "rust_hdwallet"
 path = "src/lib.rs"
 
 [[bin]]

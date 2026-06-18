@@ -22,7 +22,7 @@
 //!
 //! Bare `--` tokens are stripped. `--` before english still works: `bip39 12 -- english`.
 
-use hdwallet_rust::hdwallet::mnemonics::{
+use rust_hdwallet::hdwallet::mnemonics::{
     AlgorandMnemonic, AlgorandMnemonicLanguages, BIP39Mnemonic, BIP39MnemonicLanguages,
     ElectrumV1Mnemonic, ElectrumV1MnemonicLanguages, ElectrumV2Mnemonic,
     ElectrumV2MnemonicLanguages, ElectrumV2MnemonicTypes, IMnemonic, MoneroMnemonic,

@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
-use hdwallet_rust::hdwallet::derivations::Derivations;
-use hdwallet_rust::hdwallet::hdwallet::{build_derivation, HDWallet, HDWalletConfig};
+use rust_hdwallet::hdwallet::derivations::Derivations;
+use rust_hdwallet::hdwallet::hdwallet::{build_derivation, HDWallet, HDWalletConfig};
 use serde_json::{Map, Value};
 
 use super::{assert_json_eq, json_nullable_str, json_str, TestData};
@@ -93,11 +93,11 @@ pub fn apply_derivation(wallet: &mut HDWallet, data: &TestData, hd: &str) {
 
 fn build_derivation_from_args(
     name: &str,
-    crypto: &hdwallet_rust::hdwallet::cryptocurrencies::icryptocurrency::CryptocurrencyDescriptor,
+    crypto: &rust_hdwallet::hdwallet::cryptocurrencies::icryptocurrency::CryptocurrencyDescriptor,
     args: &Value,
 ) -> Result<
-    Box<dyn hdwallet_rust::hdwallet::derivations::IDerivation>,
-    hdwallet_rust::hdwallet::exceptions::Error,
+    Box<dyn rust_hdwallet::hdwallet::derivations::IDerivation>,
+    rust_hdwallet::hdwallet::exceptions::Error,
 > {
     let get = |k: &str| args.get(k).map(json_str).unwrap_or_else(|| "0".to_string());
     match name {

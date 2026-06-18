@@ -1,5 +1,5 @@
 use super::conftest::{json_str, TestData};
-use hdwallet_rust::hdwallet::seeds::MoneroSeed;
+use rust_hdwallet::hdwallet::seeds::MoneroSeed;
 
 #[test]
 fn test_monero_seeds() {

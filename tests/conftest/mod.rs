@@ -1,4 +1,4 @@
-﻿//! Rust equivalent of python-hdwallet `tests/conftest.py`.
+//! Rust equivalent of python-hdwallet `tests/conftest.py`.
 #![allow(dead_code, unused_imports)]
 
 #[allow(dead_code, unused_imports)]
@@ -32,9 +32,9 @@ pub use json_helpers::*;
 
 /// Mirrors pytest `cli_tester` fixture (`CliRunner`).
 pub fn cli_tester(args: &[&str]) -> Result<String, i32> {
-    hdwallet_rust::hdwallet::cli::run_from(args)
+    rust_hdwallet::hdwallet::cli::run_from(args)
 }
 
 pub fn get_bytes(hex: &str) -> Vec<u8> {
-    hdwallet_rust::hdwallet::utils::hex_to_bytes(hex).expect("valid hex")
+    rust_hdwallet::hdwallet::utils::hex_to_bytes(hex).expect("valid hex")
 }

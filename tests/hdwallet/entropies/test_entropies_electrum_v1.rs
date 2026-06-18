@@ -1,11 +1,11 @@
 use super::conftest::{assert_error_contains, get_bytes, json_str, json_usize, TestData};
-use hdwallet_rust::hdwallet::entropies::{
+use rust_hdwallet::hdwallet::entropies::{
     electrum::ElectrumV1EntropyStrengths, ientropy::EntropyError, ElectrumV1Entropy,
     EntropyInstance, IEntropy,
 };
 
 fn new_entropy_instance(entropy: &str) -> Result<EntropyInstance, EntropyError> {
-    if hdwallet_rust::hdwallet::utils::hex_to_bytes(entropy).is_err() {
+    if rust_hdwallet::hdwallet::utils::hex_to_bytes(entropy).is_err() {
         return Err(EntropyError::new("Invalid entropy data"));
     }
     EntropyInstance::new::<ElectrumV1Entropy>(entropy)

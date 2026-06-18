@@ -1,8 +1,8 @@
-# Contributing to hdwallet-rust
+# Contributing to rust-hdwallet
 
-Thank you for helping improve **hdwallet-rust**. This project is in **beta**, so feedback, bug reports, and contributions are especially valuable right now.
+Thank you for helping improve **rust-hdwallet**. This project is in **beta**, so feedback, bug reports, and contributions are especially valuable right now.
 
-Please read this guide before opening a pull request. For larger changes, open an [issue](https://github.com/itsm3abena/hdwallet-rust/issues) first so we can agree on the approach.
+Please read this guide before opening a pull request. For larger changes, open an [issue](https://github.com/itsm3abena/rust-hdwallet/issues) first so we can agree on the approach.
 
 ## Ways to Contribute
 
@@ -23,18 +23,18 @@ You do not need to write code to help. Useful contributions include:
 
 ### Fork and clone
 
-1. Fork [itsm3abena/hdwallet-rust](https://github.com/itsm3abena/hdwallet-rust) on GitHub.
+1. Fork [itsm3abena/rust-hdwallet](https://github.com/itsm3abena/rust-hdwallet) on GitHub.
 2. Clone your fork:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/hdwallet-rust.git
-cd hdwallet-rust
+git clone https://github.com/YOUR_USERNAME/rust-hdwallet.git
+cd rust-hdwallet
 ```
 
 3. Add the upstream remote:
 
 ```bash
-git remote add upstream https://github.com/itsm3abena/hdwallet-rust.git
+git remote add upstream https://github.com/itsm3abena/rust-hdwallet.git
 ```
 
 ### Build and test
@@ -111,7 +111,7 @@ When filing a bug during beta testing, please include:
 
 | Field | Example |
 |:------|:--------|
-| `hdwallet-rust` version / commit | `0.1.0` or `abc1234` |
+| `rust-hdwallet` version / commit | `0.1.0-beta` or `abc1234` |
 | Rust version | `rustc 1.85.0` |
 | OS | Windows 11, Ubuntu 24.04, macOS 15 |
 | Input | CLI flags, mnemonic type, symbol, HD standard, path |
@@ -136,7 +136,7 @@ Be respectful and constructive. Assume good intent. Disagreement about technical
 
 ## Questions?
 
-Open a [GitHub issue](https://github.com/itsm3abena/hdwallet-rust/issues) with the `question` label, or reach out via the contact in the repository metadata.
+Open a [GitHub issue](https://github.com/itsm3abena/rust-hdwallet/issues) with the `question` label, or reach out via the contact in the repository metadata.
 
 ## License
 

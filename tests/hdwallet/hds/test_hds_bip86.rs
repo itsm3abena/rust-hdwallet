@@ -2,8 +2,8 @@ use super::conftest::{
     assert_bip32_derivation, assert_bip32_root, assert_derivation_p2tr_address,
     bip86_derivation_external_address_1, load_bip_hd, TestData,
 };
-use hdwallet_rust::hdwallet::derivations::IDerivation;
-use hdwallet_rust::hdwallet::hds::ihd::Ihd;
+use rust_hdwallet::hdwallet::derivations::IDerivation;
+use rust_hdwallet::hdwallet::hds::ihd::Ihd;
 
 #[test]
 fn test_bip86_hd() {

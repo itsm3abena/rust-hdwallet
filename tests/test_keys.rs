@@ -1,4 +1,4 @@
-use hdwallet_rust::hdwallet::keys::{is_root_key, is_valid_key};
+use rust_hdwallet::hdwallet::keys::{is_root_key, is_valid_key};
 
 #[test]
 fn test_keys() {

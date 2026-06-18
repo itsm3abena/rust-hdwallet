@@ -1,6 +1,6 @@
 use super::conftest::{assert_error_contains, get_bytes, json_str, json_usize, TestData};
-use hdwallet_rust::hdwallet::exceptions::EntropyError;
-use hdwallet_rust::hdwallet::mnemonics::{
+use rust_hdwallet::hdwallet::exceptions::EntropyError;
+use rust_hdwallet::hdwallet::mnemonics::{
     imnemonic::IMnemonic,
     monero::{MoneroMnemonicLanguages, MoneroMnemonicWordCounts},
     MoneroMnemonic,

@@ -1,8 +1,8 @@
 use blake2::Digest;
-use hdwallet_rust::hdwallet::libs::base58::{
+use rust_hdwallet::hdwallet::libs::base58::{
     check_decode, check_encode, checksum_encode, decode, encode,
 };
-use hdwallet_rust::hdwallet::libs::ripemd160::ripemd160;
+use rust_hdwallet::hdwallet::libs::ripemd160::ripemd160;
 use sha2::{Digest as Sha2Digest, Sha256};
 use sha3::Sha3_256;
 

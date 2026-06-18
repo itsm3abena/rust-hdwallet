@@ -1,5 +1,5 @@
 use super::conftest::{json_str, TestData};
-use hdwallet_rust::hdwallet::seeds::CardanoSeed;
+use rust_hdwallet::hdwallet::seeds::CardanoSeed;
 
 #[test]
 fn test_cardano_seeds() {

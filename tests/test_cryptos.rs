@@ -1,4 +1,4 @@
-use hdwallet_rust::hdwallet::crypto::{
+use rust_hdwallet::hdwallet::crypto::{
     blake2b, blake2b_160, blake2b_224, blake2b_256, blake2b_32, blake2b_40, blake2b_512,
     chacha20_poly1305_decrypt, chacha20_poly1305_encrypt, crc32, double_sha256, hash160, hmac_sha256,
     hmac_sha512, kekkak256, pbkdf2_hmac_sha512, ripemd160, sha256, sha3_256, sha512, sha512_256,

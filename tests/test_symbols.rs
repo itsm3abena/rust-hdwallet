@@ -1,4 +1,4 @@
-use hdwallet_rust::hdwallet::symbols::*;
+use rust_hdwallet::hdwallet::symbols::*;
 
 #[test]
 fn test_symbols() {

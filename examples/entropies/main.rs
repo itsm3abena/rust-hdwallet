@@ -2,8 +2,8 @@
 //!
 //! Schemes: `bip39`, `algorand`, `monero`, `electrum-v1`, `electrum-v2`
 
-use hdwallet_rust::hdwallet::entropies::electrum::{ElectrumV1Entropy, ElectrumV2Entropy};
-use hdwallet_rust::hdwallet::entropies::{
+use rust_hdwallet::hdwallet::entropies::electrum::{ElectrumV1Entropy, ElectrumV2Entropy};
+use rust_hdwallet::hdwallet::entropies::{
     AlgorandEntropy, BIP39Entropy, MoneroEntropy, IEntropy,
 };
 

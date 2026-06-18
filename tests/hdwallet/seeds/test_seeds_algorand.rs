@@ -1,5 +1,5 @@
 use super::conftest::{json_str, TestData};
-use hdwallet_rust::hdwallet::seeds::AlgorandSeed;
+use rust_hdwallet::hdwallet::seeds::AlgorandSeed;
 
 #[test]
 fn test_algorand_seeds() {

@@ -15,8 +15,8 @@
 //!
 //! Bare `--` tokens are stripped.
 
-use hdwallet_rust::hdwallet::mnemonics::ElectrumV2MnemonicTypes;
-use hdwallet_rust::hdwallet::seeds::{
+use rust_hdwallet::hdwallet::mnemonics::ElectrumV2MnemonicTypes;
+use rust_hdwallet::hdwallet::seeds::{
     AlgorandSeed, BIP39Seed, CardanoSeed, CardanoTypes, ElectrumV1Seed, ElectrumV2Seed, MoneroSeed,
 };
 

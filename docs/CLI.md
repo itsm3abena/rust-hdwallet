@@ -1,16 +1,16 @@
 # HDWallet CLI Guide
 
-Command-line interface for **hdwallet-rust** (`0.1.0-beta`). Use this guide to install the CLI and run copy-paste examples against known test vectors.
+Command-line interface for **rust-hdwallet** (`0.1.0-beta`). Use this guide to install the CLI and run copy-paste examples against known test vectors.
 
-> **Beta:** Behavior and flags may change. If something fails, [open an issue](https://github.com/itsm3abena/hdwallet-rust/issues) with the exact command and output.
+> **Beta:** Behavior and flags may change. If something fails, [open an issue](https://github.com/itsm3abena/rust-hdwallet/issues) with the exact command and output.
 
 ## Install
 
 **From source (recommended for testing):**
 
 ```bash
-git clone https://github.com/itsm3abena/hdwallet-rust.git
-cd hdwallet-rust
+git clone https://github.com/itsm3abena/rust-hdwallet.git
+cd rust-hdwallet
 cargo build --release
 ```
 
@@ -23,6 +23,8 @@ cargo run --bin hdwallet -- --help
 Install globally:
 
 ```bash
+cargo install rust-hdwallet --version 0.1.0-beta
+# or from a local clone:
 cargo install --path .
 hdwallet --version
 ```

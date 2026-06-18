@@ -1,5 +1,5 @@
 use super::conftest::{assert_address_name, assert_simple_encode_decode, TestData};
-use hdwallet_rust::hdwallet::addresses::{
+use rust_hdwallet::hdwallet::addresses::{
     AlgorandAddress, AptosAddress, MultiversXAddress, NearAddress, SolanaAddress, StellarAddress,
     SuiAddress, TezosAddress,
 };

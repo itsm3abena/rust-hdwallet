@@ -1,4 +1,4 @@
-use hdwallet_rust::hdwallet::eccs::{
+use rust_hdwallet::hdwallet::eccs::{
     KholawEd25519Ecc, KholawEd25519Point, KholawEd25519PrivateKey, KholawEd25519PublicKey, IPrivateKey, IPublicKey,
 };
 

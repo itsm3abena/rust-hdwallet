@@ -1,4 +1,4 @@
-use hdwallet_rust::hdwallet::eccs::{IPoint, IPrivateKey, IPublicKey, IEllipticCurveCryptography};
+use rust_hdwallet::hdwallet::eccs::{IPoint, IPrivateKey, IPublicKey, IEllipticCurveCryptography};
 use num_bigint::BigUint;
 use num_traits::Zero;
 use serde_json::Value;

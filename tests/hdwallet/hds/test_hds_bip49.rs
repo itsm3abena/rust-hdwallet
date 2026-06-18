@@ -2,8 +2,8 @@ use super::conftest::{
     assert_bip32_derivation, assert_bip32_root, assert_derivation_p2wpkh_in_p2sh_address,
     bip49_derivation_internal, load_bip_hd, TestData,
 };
-use hdwallet_rust::hdwallet::derivations::IDerivation;
-use hdwallet_rust::hdwallet::hds::ihd::Ihd;
+use rust_hdwallet::hdwallet::derivations::IDerivation;
+use rust_hdwallet::hdwallet::hds::ihd::Ihd;
 
 #[test]
 fn test_bip49_hd() {

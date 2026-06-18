@@ -1,20 +1,20 @@
 use bitcoin::Network;
-use hdwallet_rust::hdwallet::addresses::iaddress::{EncodeKwargs, EncodePublicKey, IAddress};
-use hdwallet_rust::hdwallet::addresses::{
+use rust_hdwallet::hdwallet::addresses::iaddress::{EncodeKwargs, EncodePublicKey, IAddress};
+use rust_hdwallet::hdwallet::addresses::{
     P2PKHAddress, P2SHAddress, P2TRAddress, P2WPKHAddress, P2WPKHInP2SHAddress, P2WSHAddress,
     P2WSHInP2SHAddress,
 };
-use hdwallet_rust::hdwallet::consts::PublicKeyTypes;
-use hdwallet_rust::hdwallet::cryptocurrencies::bitcoin::Mainnet as BitcoinMainnet;
-use hdwallet_rust::hdwallet::cryptocurrencies::{Bitcoin, Cardano};
-use hdwallet_rust::hdwallet::derivations::{
+use rust_hdwallet::hdwallet::consts::PublicKeyTypes;
+use rust_hdwallet::hdwallet::cryptocurrencies::bitcoin::Mainnet as BitcoinMainnet;
+use rust_hdwallet::hdwallet::cryptocurrencies::{Bitcoin, Cardano};
+use rust_hdwallet::hdwallet::derivations::{
     Bip44Derivation, Bip49Derivation, Bip84Derivation, Bip86Derivation, ChangeInput,
     Cip1852Derivation, ElectrumDerivation, IDerivation, ROLES,
 };
-use hdwallet_rust::hdwallet::extended_keys::{deserialize_extended, serialize_extended};
-use hdwallet_rust::hdwallet::hds::bip32::Bip32Hd;
-use hdwallet_rust::hdwallet::hds::ihd::Ihd;
-use hdwallet_rust::hdwallet::hds::{CardanoHd, ElectrumV1Hd, ElectrumV2Hd, MoneroHd};
+use rust_hdwallet::hdwallet::extended_keys::{deserialize_extended, serialize_extended};
+use rust_hdwallet::hdwallet::hds::bip32::Bip32Hd;
+use rust_hdwallet::hdwallet::hds::ihd::Ihd;
+use rust_hdwallet::hdwallet::hds::{CardanoHd, ElectrumV1Hd, ElectrumV2Hd, MoneroHd};
 use serde_json::Value;
 
 use super::json_helpers::{json_indexes, json_kebab_str, json_u32};

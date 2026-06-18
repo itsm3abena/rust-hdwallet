@@ -1,5 +1,5 @@
 use super::conftest::{assert_address_name, assert_simple_encode_decode, TestData};
-use hdwallet_rust::hdwallet::addresses::NeoAddress;
+use rust_hdwallet::hdwallet::addresses::NeoAddress;
 
 #[test]
 fn test_neo_address() {

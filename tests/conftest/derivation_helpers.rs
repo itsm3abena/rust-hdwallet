@@ -1,14 +1,14 @@
-use hdwallet_rust::hdwallet::derivations::{
+use rust_hdwallet::hdwallet::derivations::{
     Bip44Derivation, Bip49Derivation, Bip84Derivation, Bip86Derivation, Cip1852Derivation,
     ChangeInput, ChangeValue, CustomDerivation, ElectrumDerivation, HdwDerivation, IDerivation,
     MoneroDerivation, RoleInput,
 };
-use hdwallet_rust::hdwallet::exceptions::DerivationError;
+use rust_hdwallet::hdwallet::exceptions::DerivationError;
 use serde_json::Value;
 
 use super::json_helpers::json_u32;
 use super::{assert_error_contains, json_str, TestData};
-use hdwallet_rust::hdwallet::derivations::CHANGES;
+use rust_hdwallet::hdwallet::derivations::CHANGES;
 
 fn change_value_from_json(value: &str) -> ChangeValue {
     match value {
@@ -35,7 +35,7 @@ pub fn assert_purpose_derivation_defaults<D>(
 }
 
 pub fn assert_bip44(data: &TestData) {
-    use hdwallet_rust::hdwallet::derivations::CHANGES;
+    use rust_hdwallet::hdwallet::derivations::CHANGES;
 
     assert_eq!(CHANGES::EXTERNAL_CHAIN, "external-chain");
     assert_eq!(CHANGES::INTERNAL_CHAIN, "internal-chain");
@@ -274,7 +274,7 @@ pub fn assert_electrum_derivation(data: &TestData) {
 }
 
 pub fn assert_hdw_derivation(data: &TestData) {
-    use hdwallet_rust::hdwallet::derivations::EccValue;
+    use rust_hdwallet::hdwallet::derivations::EccValue;
 
     let default_fixture = &data.derivations["HDW"]["default"];
     let from_fixture = &data.derivations["HDW"]["from"];
@@ -291,7 +291,7 @@ pub fn assert_hdw_derivation(data: &TestData) {
 
     let mut derivation = HdwDerivation::new(
         Some(json_u32(&from_fixture["account"]).into()),
-        Some(hdwallet_rust::hdwallet::derivations::EccInput::Str(
+        Some(rust_hdwallet::hdwallet::derivations::EccInput::Str(
             json_str(&from_fixture["ecc"]).as_str(),
         )),
         Some(json_u32(&from_fixture["address"]).into()),
@@ -318,7 +318,7 @@ pub fn assert_hdw_derivation(data: &TestData) {
     derivation
         .from_account(json_u32(&from_fixture["account"]))
         .expect("from_account")
-        .from_ecc(hdwallet_rust::hdwallet::derivations::EccInput::Str(
+        .from_ecc(rust_hdwallet::hdwallet::derivations::EccInput::Str(
             json_str(&from_fixture["ecc"]).as_str(),
         ))
         .expect("from_ecc")
@@ -335,14 +335,14 @@ pub fn assert_hdw_derivation(data: &TestData) {
     assert_error_contains(
         HdwDerivation::new(
             None,
-            Some(hdwallet_rust::hdwallet::derivations::EccInput::Str("invalid-ecc")),
+            Some(rust_hdwallet::hdwallet::derivations::EccInput::Str("invalid-ecc")),
             None,
         ),
         "Bad HDW ECC index",
     );
     let mut derivation = HdwDerivation::new(None, None, None).expect("new");
     assert_error_contains(
-        derivation.from_ecc(hdwallet_rust::hdwallet::derivations::EccInput::Str(
+        derivation.from_ecc(rust_hdwallet::hdwallet::derivations::EccInput::Str(
             "invalid-ecc",
         )),
         "Bad HDW ECC index",
@@ -350,7 +350,7 @@ pub fn assert_hdw_derivation(data: &TestData) {
 }
 
 pub fn assert_cip1852_derivation(data: &TestData) {
-    use hdwallet_rust::hdwallet::derivations::ROLES;
+    use rust_hdwallet::hdwallet::derivations::ROLES;
 
     assert_eq!(ROLES::EXTERNAL_CHAIN, "external-chain");
     assert_eq!(ROLES::INTERNAL_CHAIN, "internal-chain");

@@ -3,7 +3,7 @@ use super::conftest::{
     filecoin_kwargs, p2pkh_kwargs, p2sh_kwargs, p2tr_kwargs, p2wpkh_kwargs, public_key_type_kwargs,
     ripple_kwargs, skip_checksum_kwargs, TestData,
 };
-use hdwallet_rust::hdwallet::addresses::{
+use rust_hdwallet::hdwallet::addresses::{
     AvalancheAddress, CosmosAddress, EOSAddress, ErgoAddress, EthereumAddress, FilecoinAddress,
     HarmonyAddress, InjectiveAddress, OKTChainAddress, P2PKHAddress, P2SHAddress, P2TRAddress,
     P2WPKHAddress, P2WPKHInP2SHAddress, RippleAddress, TronAddress, XinFinAddress, ZilliqaAddress,

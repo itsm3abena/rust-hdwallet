@@ -1,4 +1,4 @@
-use hdwallet_rust::hdwallet::eccs::{
+use rust_hdwallet::hdwallet::eccs::{
     Slip10Secp256k1Ecc, Slip10Secp256k1Point, Slip10Secp256k1PrivateKey, Slip10Secp256k1PublicKey,
     IPrivateKey, IPublicKey,
 };

@@ -1,4 +1,4 @@
-use hdwallet_rust::hdwallet::eccs::{
+use rust_hdwallet::hdwallet::eccs::{
     Slip10Ed25519MoneroEcc, Slip10Ed25519MoneroPoint, Slip10Ed25519MoneroPrivateKey, Slip10Ed25519MoneroPublicKey, IPrivateKey, IPublicKey,
 };
 
