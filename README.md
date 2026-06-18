@@ -2,6 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-black.svg)](LICENSE)
 [![Rust Version](https://img.shields.io/badge/rust-1.85%2B-orange.svg)](https://www.rust-lang.org)
+[![crates.io](https://img.shields.io/crates/v/rust-hdwallet.svg)](https://crates.io/crates/rust-hdwallet)
 
 Rust implementation of a Hierarchical Deterministic (HD) Wallet generator for **200+ cryptocurrencies**.
 
@@ -23,18 +24,38 @@ This library is a Rust port inspired by the excellent [python-hdwallet](https://
 
 ## Installation
 
-Add the library to your `Cargo.toml`:
+Published on [crates.io](https://crates.io/crates/rust-hdwallet). **Requires Rust 1.85 or later.**
+
+### Library
+
+Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
 rust-hdwallet = "0.1.0-beta"
 ```
 
-Or install from GitHub:
+### CLI (global)
+
+Install the `hdwallet` command from crates.io:
+
+```bash
+cargo install rust-hdwallet --version 0.1.0-beta
+hdwallet --version
+```
+
+Then run from anywhere:
+
+```bash
+hdwallet list cryptocurrencies
+hdwallet --help
+```
+
+### From GitHub
 
 ```toml
 [dependencies]
-rust-hdwallet = { git = "https://github.com/itsm3abena/rust-hdwallet" }
+rust-hdwallet = { git = "https://github.com/itsm3abena/rust-hdwallet", tag = "v0.1.0-beta" }
 ```
 
 Or clone and build locally:
@@ -43,19 +64,9 @@ Or clone and build locally:
 git clone https://github.com/itsm3abena/rust-hdwallet.git
 cd rust-hdwallet
 cargo build --release
-```
-
-The CLI binary is named `hdwallet`:
-
-```bash
-cargo install rust-hdwallet --version 0.1.0-beta
-# or from a local clone:
 cargo install --path .
-# or
 cargo run --bin hdwallet -- --help
 ```
-
-**Requirements:** Rust 1.85 or later.
 
 ## Quick Usage
 

@@ -6,7 +6,14 @@ Command-line interface for **rust-hdwallet** (`0.1.0-beta`). Use this guide to i
 
 ## Install
 
-**From source (recommended for testing):**
+**From crates.io (recommended):**
+
+```bash
+cargo install rust-hdwallet --version 0.1.0-beta
+hdwallet --version
+```
+
+**From source:**
 
 ```bash
 git clone https://github.com/itsm3abena/rust-hdwallet.git
@@ -20,11 +27,9 @@ Run without installing:
 cargo run --bin hdwallet -- --help
 ```
 
-Install globally:
+Install globally from a local clone:
 
 ```bash
-cargo install rust-hdwallet --version 0.1.0-beta
-# or from a local clone:
 cargo install --path .
 hdwallet --version
 ```
