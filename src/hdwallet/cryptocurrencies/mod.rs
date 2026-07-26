@@ -187,6 +187,7 @@ pub mod tezos;
 pub mod theta;
 pub mod thoughtai;
 pub mod toacoin;
+pub mod ton;
 pub mod tron;
 pub mod twins;
 pub mod ultimatesecurecash;
@@ -404,6 +405,7 @@ pub use tezos::Tezos;
 pub use theta::Theta;
 pub use thoughtai::ThoughtAI;
 pub use toacoin::TOACoin;
+pub use ton::Ton;
 pub use tron::Tron;
 pub use twins::Twins;
 pub use ultimatesecurecash::UltimateSecureCash;
@@ -671,6 +673,7 @@ static DESCRIPTORS: &[&icryptocurrency::CryptocurrencyDescriptor] = &[
         &theta::DESCRIPTOR,
         &thoughtai::DESCRIPTOR,
         &toacoin::DESCRIPTOR,
+        &ton::DESCRIPTOR,
         &tron::DESCRIPTOR,
         &twins::DESCRIPTOR,
         &ultimatesecurecash::DESCRIPTOR,

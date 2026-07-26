@@ -19,12 +19,12 @@ This library is a Rust port inspired by the excellent [python-hdwallet](https://
 | Elliptic Curve Cryptography | `Kholaw-Ed25519`, `SLIP10-Ed25519`, `SLIP10-Ed25519-Blake2b`, `SLIP10-Ed25519-Monero`, `SLIP10-Nist256p1`, `SLIP10-Secp256k1` |
 | Hierarchical Deterministic | `Algorand`, `BIP32`, `BIP44`, `BIP49`, `BIP84`, `BIP86`, `BIP141`, `Cardano`, `Electrum-V1`, `Electrum-V2`, `Monero` |
 | Derivations | `BIP44`, `BIP49`, `BIP84`, `BIP86`, `CIP1852`, `Custom`, `Electrum`, `Monero`, `HDW` |
-| Addresses | `Algorand`, `Aptos`, `Avalanche`, `Cardano`, `Cosmos`, `EOS`, `Ergo`, `Ethereum`, `Filecoin`, `Harmony`, `Icon`, `Injective`, `Monero`, `MultiversX`, `Nano`, `Near`, `Neo`, `OKT-Chain`, `P2PKH`, `P2SH`, `P2TR`, `P2WPKH`, `P2WPKH-In-P2SH`, `P2WSH`, `P2WSH-In-P2SH`, `Ripple`, `Solana`, `Stellar`, `Sui`, `Tezos`, `Tron`, `XinFin`, `Zilliqa` |
+| Addresses | `Algorand`, `Aptos`, `Avalanche`, `Cardano`, `Cosmos`, `EOS`, `Ergo`, `Ethereum`, `Filecoin`, `Harmony`, `Icon`, `Injective`, `Monero`, `MultiversX`, `Nano`, `Near`, `Neo`, `OKT-Chain`, `P2PKH`, `P2SH`, `P2TR`, `P2WPKH`, `P2WPKH-In-P2SH`, `P2WSH`, `P2WSH-In-P2SH`, `Ripple`, `Solana`, `Stellar`, `Sui`, `Tezos`, `Ton`, `Tron`, `XinFin`, `Zilliqa` |
 | Others | `BIP38`, `Wallet Import Format`, `Serialization` |
 
 ## Installation
 
-Published on [crates.io](https://crates.io/crates/rust-hdwallet). **Requires Rust 1.85 or later.**
+Published on [crates.io](https://crates.io/crates/rust-hdwallet). **Requires Rust 1.75 or later.**
 
 ### Library
 

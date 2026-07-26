@@ -28,6 +28,7 @@ mod solana;
 mod stellar;
 mod sui;
 mod tezos;
+mod ton;
 mod tron;
 mod xinfin;
 mod zilliqa;
@@ -66,13 +67,14 @@ pub use solana::SolanaAddress;
 pub use stellar::StellarAddress;
 pub use sui::SuiAddress;
 pub use tezos::TezosAddress;
+pub use ton::TonAddress;
 pub use tron::TronAddress;
 pub use xinfin::XinFinAddress;
 pub use zilliqa::ZilliqaAddress;
 pub use classes::{
     ALGORAND, APTOS, AVALANCHE, BITCOIN_CASH, CARDANO, COSMOS, EOS, ERGO, ETHEREUM, FILECOIN,
     HARMONY, ICON, INJECTIVE, MONERO, MULTIVERS_X, NANO, NEAR, NEO, OKT_CHAIN, P2PKH, P2SH,
-    RIPPLE, SOLANA, STELLAR, SUI, TEZOS, TRON,
+    RIPPLE, SOLANA, STELLAR, SUI, TEZOS, TON, TRON,
     XIN_FIN, ZILLIQA, AlgorandAddress, AptosAddress, NanoAddress,
     NearAddress, NeoAddress,
 };

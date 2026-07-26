@@ -37,6 +37,13 @@ pub struct EncodeKwargs<'a> {
     pub script_address_prefix: Option<u32>,
     pub witness_version: Option<u8>,
     pub alphabet: Option<&'static str>,
+    pub bounceable: Option<bool>,
+    pub ton_testnet: Option<bool>,
+    pub workchain: Option<i8>,
+    pub wallet_version: Option<&'static str>,
+    pub wallet_id: Option<i64>,
+    pub network_global_id: Option<i64>,
+    pub subwallet_number: Option<u32>,
 }
 
 #[derive(Debug, Default, Clone, Copy)]

@@ -296,6 +296,11 @@ impl HDWallet {
         self.seed_hex = Some(seed_hex.to_string());
 
         self.backend = Some(self.backend_from_seed(&seed_bytes)?);
+        if self.cryptocurrency.name == "Ton" {
+            let derivation = CustomDerivation::new(Some(self.cryptocurrency.default_path), None)
+                .map_err(map_derivation_error)?;
+            return self.from_derivation("Custom", Box::new(derivation));
+        }
         Ok(())
     }
 
@@ -1102,15 +1107,19 @@ impl HDWallet {
         let public_key = public_key.ok_or_else(|| {
             Error::new("Public key is not available for address encoding", None, None, None)
         })?;
-        let address_registry = match self.hd.as_str() {
-            "BIP49" => "P2WPKH-In-P2SH",
-            "BIP84" | "BIP141" if self.semantic.as_deref() == Some("p2wpkh") => "P2WPKH",
-            "BIP141" if self.semantic.as_deref() == Some("p2wpkh-in-p2sh") => "P2WPKH-In-P2SH",
-            "BIP141" if self.semantic.as_deref() == Some("p2wsh") => "P2WSH",
-            "BIP141" if self.semantic.as_deref() == Some("p2wsh-in-p2sh") => "P2WSH-In-P2SH",
-            "BIP86" => "P2TR",
-            "BIP44" => "P2PKH",
-            _ => self.cryptocurrency.default_address,
+        let address_registry = if self.cryptocurrency.name == "Ton" {
+            "Ton"
+        } else {
+            match self.hd.as_str() {
+                "BIP49" => "P2WPKH-In-P2SH",
+                "BIP84" | "BIP141" if self.semantic.as_deref() == Some("p2wpkh") => "P2WPKH",
+                "BIP141" if self.semantic.as_deref() == Some("p2wpkh-in-p2sh") => "P2WPKH-In-P2SH",
+                "BIP141" if self.semantic.as_deref() == Some("p2wsh") => "P2WSH",
+                "BIP141" if self.semantic.as_deref() == Some("p2wsh-in-p2sh") => "P2WSH-In-P2SH",
+                "BIP86" => "P2TR",
+                "BIP44" => "P2PKH",
+                _ => self.cryptocurrency.default_address,
+            }
         };
         let kwargs = self.base_encode_kwargs(Some(address_registry));
         let public_key_input = EncodePublicKey::Str(public_key);
@@ -1401,7 +1410,7 @@ pub fn default_include_for_hd(hd: &str, cryptocurrency: &CryptocurrencyDescripto
             "Algorand" | "Aptos" | "Avalanche" | "Cosmos" | "EOS" | "Ergo" | "Ethereum"
                 | "Filecoin" | "Harmony" | "Icon" | "Injective" | "MultiversX" | "Nano" | "Near"
                 | "Neo" | "OKT-Chain" | "Ripple" | "Solana" | "Stellar" | "Sui" | "Tezos"
-                | "Tron" | "XinFin" | "Zilliqa"
+                | "Ton" | "Tron" | "XinFin" | "Zilliqa"
         )
     {
         include = "at:path,address,public_key,private_key".to_string();

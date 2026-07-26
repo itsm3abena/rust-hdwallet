@@ -187,6 +187,7 @@ pub mod coin_types {
     pub const THETA: u32 = 500;
     pub const THOUGHT_AI: u32 = 502;
     pub const TOA_COIN: u32 = 159;
+    pub const TON: u32 = 607;
     pub const TESTNET: u32 = 1;
     pub const TRON: u32 = 195;
     pub const TWINS: u32 = 970;

@@ -63,6 +63,13 @@ impl AvalancheAddress {
             script_address_prefix: kwargs.script_address_prefix,
             witness_version: kwargs.witness_version,
             alphabet: kwargs.alphabet,
+            bounceable: kwargs.bounceable,
+            ton_testnet: kwargs.ton_testnet,
+            workchain: kwargs.workchain,
+            wallet_version: kwargs.wallet_version,
+            wallet_id: kwargs.wallet_id,
+            network_global_id: kwargs.network_global_id,
+            subwallet_number: kwargs.subwallet_number,
         }
     }
 
