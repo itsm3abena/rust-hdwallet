@@ -29,6 +29,7 @@ pub use super::solana::SolanaAddress;
 pub use super::stellar::StellarAddress;
 pub use super::sui::SuiAddress;
 pub use super::tezos::TezosAddress;
+pub use super::ton::TonAddress;
 pub use super::tron::TronAddress;
 pub use super::xinfin::XinFinAddress;
 pub use super::zilliqa::ZilliqaAddress;
@@ -66,6 +67,7 @@ pub static SOLANA: SolanaAddress = SolanaAddress;
 pub static STELLAR: StellarAddress = StellarAddress;
 pub static SUI: SuiAddress = SuiAddress;
 pub static TEZOS: TezosAddress = TezosAddress;
+pub static TON: TonAddress = TonAddress;
 pub static TRON: TronAddress = TronAddress;
 pub static XIN_FIN: XinFinAddress = XinFinAddress;
 pub static ZILLIQA: ZilliqaAddress = ZilliqaAddress;
@@ -102,6 +104,7 @@ pub static CLASS_ORDER: &[&dyn IAddress] = &[
     &STELLAR as &dyn IAddress,
     &SUI as &dyn IAddress,
     &TEZOS as &dyn IAddress,
+    &TON as &dyn IAddress,
     &TRON as &dyn IAddress,
     &XIN_FIN as &dyn IAddress,
     &ZILLIQA as &dyn IAddress,

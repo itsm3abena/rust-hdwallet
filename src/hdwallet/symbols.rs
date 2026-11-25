@@ -1,5 +1,3 @@
-//! Ticker symbols (mirrors `hdwallet/symbols.py`).
-
 pub const ACC: &str = "ACC";
 pub const AKT: &str = "AKT";
 pub const ALGO: &str = "ALGO";
@@ -188,6 +186,7 @@ pub const XTZ: &str = "XTZ";
 pub const THETA: &str = "THETA";
 pub const THT: &str = "THT";
 pub const TOA: &str = "TOA";
+pub const TON: &str = "TON";
 pub const TRX: &str = "TRX";
 pub const TWINS: &str = "TWINS";
 pub const USC: &str = "USC";

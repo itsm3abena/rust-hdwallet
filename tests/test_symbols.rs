@@ -189,6 +189,7 @@ fn test_symbols() {
     assert_eq!(THETA, "THETA");
     assert_eq!(THT, "THT");
     assert_eq!(TOA, "TOA");
+    assert_eq!(TON, "TON");
     assert_eq!(TRX, "TRX");
     assert_eq!(TWINS, "TWINS");
     assert_eq!(USC, "USC");

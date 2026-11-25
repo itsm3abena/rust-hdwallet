@@ -129,6 +129,11 @@ pub fn xmodem_crc(data: impl AsRef<[u8]>) -> Vec<u8> {
     crc.checksum(data.as_ref()).to_be_bytes().to_vec()
 }
 
+/// CRC-16-CCITT (XMODEM): poly 0x1021, init 0 — matches python-hdwallet `crc16_ccitt`.
+pub fn crc16_ccitt(data: impl AsRef<[u8]>) -> Vec<u8> {
+    xmodem_crc(data)
+}
+
 pub fn pbkdf2_hmac_sha512(
     password: impl AsRef<[u8]>,
     salt: impl AsRef<[u8]>,

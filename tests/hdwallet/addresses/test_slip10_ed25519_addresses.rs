@@ -1,7 +1,7 @@
 use super::conftest::{assert_address_name, assert_simple_encode_decode, TestData};
 use rust_hdwallet::hdwallet::addresses::{
     AlgorandAddress, AptosAddress, MultiversXAddress, NearAddress, SolanaAddress, StellarAddress,
-    SuiAddress, TezosAddress,
+    SuiAddress, TezosAddress, TonAddress,
 };
 
 const ECC: &str = "SLIP10-Ed25519";
@@ -39,6 +39,13 @@ fn test_tezos_address() {
     let data = TestData::load();
     assert_address_name::<TezosAddress>(data, ECC, "Tezos");
     assert_simple_encode_decode::<TezosAddress>(data, ECC, "Tezos", "public-key");
+}
+
+#[test]
+fn test_ton_address() {
+    let data = TestData::load();
+    assert_address_name::<TonAddress>(data, ECC, "Ton");
+    assert_simple_encode_decode::<TonAddress>(data, ECC, "Ton", "public-key");
 }
 
 #[test]
